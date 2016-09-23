@@ -1,0 +1,24 @@
+{
+  "name": "spirit.io-mongodb-connector",
+  "version": "1.0.0",
+  "description": "Typescript mongodb connector for spirit.io framework",
+  "main": "index.js",
+  "scripts": {
+    "start": "node sample",
+    "test": "node test"
+  },
+  "author": "Teddy Chambard",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^2.2.9",
+    "mongoose": "^4.6.0",
+    "mongoose-unique-validator": "^1.0.2",
+    "streamline": "^2.0.10",
+    "streamline-node": "^1.0.4",
+    "streamline-runtime": "^1.0.31"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  }
+}
