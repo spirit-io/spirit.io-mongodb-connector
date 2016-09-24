@@ -1,10 +1,9 @@
 
 import { _ } from 'streamline-runtime';
 import express = require("express");
-import mongoose = require("mongoose");
 import { IController, IModelActions } from 'spirit.io/lib/interfaces';
 
-export class Controller implements IController {
+export class ModelController implements IController {
 
     constructor(private actions: IModelActions) { }
 

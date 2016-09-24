@@ -2,9 +2,6 @@ import { _ } from 'streamline-runtime';
 import { IModelFactory, IModelHelper, IModelActions } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 
-
-
-
 export class ModelHelper implements IModelHelper {
 
     private _actions: IModelActions;
