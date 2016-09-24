@@ -12,7 +12,7 @@ export class ModelHelper implements IModelHelper {
         this._target = modelFactory.targetClass;
     }
 
-    fetchInstances = (_, filter?: any) => {
+    fetchInstances = (_: _, filter?: any) => {
         let instances: any = [];
         let docs = this._actions.query(_, filter);
         for (var doc of docs) {

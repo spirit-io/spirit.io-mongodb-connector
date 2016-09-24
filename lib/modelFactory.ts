@@ -17,6 +17,8 @@ export class ModelFactory implements IModelFactory {
     public targetClass: any;
     public collectionName: string;
     public properties: string[];
+    public statics: string[];
+    public methods: string[];
     public schemaDef: Object;
     public schema: Schema;
     public model: Model<any>;
@@ -29,12 +31,14 @@ export class ModelFactory implements IModelFactory {
         this.collectionName = targetClass._collectionName;
         this.schemaDef = {};
         this.properties = [];
-        
+        this.statics = [];
+        this.methods = [];
     }
 
     setup = (app: express.Application) => {
         trace && trace(`Schema registered for collection ${this.collectionName}: ${JSON.stringify(this.schemaDef,null,2)}`)
 
+        let name = this.collectionName;
         if (Object.keys(this.schemaDef).length) {
             let schema = new Schema(this.schemaDef, {_id: false, versionKey: false});
             schema.plugin(uniqueValidator);
@@ -45,15 +49,18 @@ export class ModelFactory implements IModelFactory {
             this.helper = new ModelHelper(this);
         }
 
+        let modelCtrl: IController = new ModelController(this);
         if (this.actions) {
-            let modelCtrl: IController = new ModelController(this.actions);
-            let name = this.collectionName;
-            trace && trace("Register route: "+`/${this.collectionName}`);
+            trace && trace(`Register route: /${name}`);
             app.get(`/${name}`, modelCtrl.query);
             app.get(`/${name}/:_id`, modelCtrl.read);
             app.post(`/${name}`, modelCtrl.create);
             app.put(`/${name}/:_id`, modelCtrl.update);
             app.delete(`/${name}/:_id`, modelCtrl.delete);
         }
+
+        app.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
+        app.post(`/${name}/:_id/([\$])method/:_name`, modelCtrl.executeMethod);
+
     } 
 }
