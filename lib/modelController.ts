@@ -54,6 +54,10 @@ export class ModelController implements IController {
 
     executeService = (req: express.Request, res: express.Response, _: _): void => {
         let _name: string = req.params['_name'];
+        if (this.modelFactory.statics.indexOf(_name) === -1 || !this._target[_name]) {
+            res.sendStatus(404);
+            return;
+        }
         let result = this._target[_name]();
         res.json(result);
     }
@@ -62,7 +66,11 @@ export class ModelController implements IController {
         let _id: string = req.params['_id'];
         let _name: string = req.params['_name'];
         let inst = this.modelFactory.helper.fetchInstance(_, _id);
-        if (!inst[_name]) throw new Error(`Method ${_name} does not exist on model ${this.modelFactory.collectionName}`);
+        if (this.modelFactory.methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
+            res.sendStatus(404);
+            return;
+        }
+        
         let result = inst[_name]();
         res.json(result);
     }
