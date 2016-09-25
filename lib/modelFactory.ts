@@ -10,7 +10,7 @@ import express = require ('express');
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
-let trace;// = console.log;
+let trace = console.log;
 
 export class ModelFactory implements IModelFactory {
 
@@ -35,7 +35,7 @@ export class ModelFactory implements IModelFactory {
         this.methods = [];
     }
 
-    setup = (app: express.Application) => {
+    setup = (routers: Map<string, express.Router>) => {
         trace && trace(`Schema registered for collection ${this.collectionName}: ${JSON.stringify(this.schemaDef,null,2)}`)
 
         let name = this.collectionName;
@@ -50,17 +50,17 @@ export class ModelFactory implements IModelFactory {
         }
 
         let modelCtrl: IController = new ModelController(this);
+        let v1 = routers.get('v1');
         if (this.actions) {
             trace && trace(`Register route: /${name}`);
-            app.get(`/${name}`, modelCtrl.query);
-            app.get(`/${name}/:_id`, modelCtrl.read);
-            app.post(`/${name}`, modelCtrl.create);
-            app.put(`/${name}/:_id`, modelCtrl.update);
-            app.delete(`/${name}/:_id`, modelCtrl.delete);
+            v1.get(`/${name}`, modelCtrl.query);
+            v1.get(`/${name}/:_id`, modelCtrl.read);
+            v1.post(`/${name}`, modelCtrl.create);
+            v1.put(`/${name}/:_id`, modelCtrl.update);
+            v1.delete(`/${name}/:_id`, modelCtrl.delete);
         }
 
-        app.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
-        app.post(`/${name}/:_id/([\$])method/:_name`, modelCtrl.executeMethod);
-
+        v1.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
+        v1.post(`/${name}/:_id/([\$])method/:_name`, modelCtrl.executeMethod);
     } 
 }
