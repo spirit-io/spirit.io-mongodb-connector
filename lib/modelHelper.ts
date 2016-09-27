@@ -28,7 +28,7 @@ export class ModelHelper implements IModelHelper {
     }
 
     saveInstance = (_:_, instance: any, options?: any) => {
-        let item = this._actions.createOrUpdate(_, instance._id, this.serialize(instance), options);
+        let item = this._actions.createOrUpdate(_, instance._id, this.serialize(instance, {ignoreNull: true}), options);
         this.updateValues(instance, item, {deleteMissing: true});
         if (options && options.returnInstance) return instance;
         return;
@@ -38,25 +38,28 @@ export class ModelHelper implements IModelHelper {
         return this._actions.delete(_, instance._id);
     }
 
-    serialize = (instance: any): any => {
+    serialize = (instance: any, options?: any): any => {
+        options = options || {};
         let item: any = {};
-        for (let key of this.modelFactory.properties) {
+        for (let key of this.modelFactory.$fields) {
             if (instance[key]) item[key] = instance[key];
+            if (!options.ignoreNull) if (instance[key] === undefined) item[key] = undefined;
         }
+        //console.log("Serialize:",item);
         return item;
     }
 
     updateValues = (instance: any, item: any, options?: any): void => {
         // update new values
         for (let key of Object.keys(item)) {
-            if (this.modelFactory.properties.indexOf(key) !== -1) {
+            if (this.modelFactory.$fields.indexOf(key) !== -1) {
                 instance[key] = item[key];
             }
         }
 
         if (options && options.deleteMissing) {
             // reinitialize deleted values
-            for (let key of this.modelFactory.properties) {
+            for (let key of this.modelFactory.$fields) {
                 if (!item.hasOwnProperty(key)) {
                     instance[key] = undefined;
                 }

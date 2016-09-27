@@ -1,8 +1,8 @@
 import { _ } from 'streamline-runtime';
 import express = require("express");
-import { IController, IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
+import { IModelController, IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
 
-export class ModelController implements IController {
+export class ModelController implements IModelController {
 
     private _actions: IModelActions;
     private _target: any;
@@ -54,7 +54,7 @@ export class ModelController implements IController {
 
     executeService = (req: express.Request, res: express.Response, _: _): void => {
         let _name: string = req.params['_name'];
-        if (this.modelFactory.statics.indexOf(_name) === -1 || !this._target[_name]) {
+        if (this.modelFactory.$statics.indexOf(_name) === -1 || !this._target[_name]) {
             res.sendStatus(404);
             return;
         }
@@ -66,7 +66,7 @@ export class ModelController implements IController {
         let _id: string = req.params['_id'];
         let _name: string = req.params['_name'];
         let inst = this.modelFactory.helper.fetchInstance(_, _id);
-        if (this.modelFactory.methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
+        if (this.modelFactory.$methods.indexOf(_name) === -1 || !inst || (inst && !inst[_name])) {
             res.sendStatus(404);
             return;
         }

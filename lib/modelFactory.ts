@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { IModelFactory, IModelActions, IModelHelper, IController } from 'spirit.io/lib/interfaces'
+import { IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces'
 import { Connection, Schema, Model, Query } from 'mongoose';
 import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';
@@ -10,15 +10,17 @@ import express = require ('express');
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
-let trace = console.log;
+let trace;// = console.log;
 
 export class ModelFactory implements IModelFactory {
 
     public targetClass: any;
     public collectionName: string;
-    public properties: string[];
-    public statics: string[];
-    public methods: string[];
+    public $properties: string[];
+    public $references: string[];
+    public $statics: string[];
+    public $methods: string[];
+    public $fields: string[];
     public schemaDef: Object;
     public schema: Schema;
     public model: Model<any>;
@@ -30,14 +32,16 @@ export class ModelFactory implements IModelFactory {
         this.targetClass = targetClass;
         this.collectionName = targetClass._collectionName;
         this.schemaDef = {};
-        this.properties = [];
-        this.statics = [];
-        this.methods = [];
+        this.$properties = [];
+        this.$references = [];
+        this.$statics = [];
+        this.$methods = [];
     }
 
     setup = (routers: Map<string, express.Router>) => {
-        trace && trace(`Schema registered for collection ${this.collectionName}: ${JSON.stringify(this.schemaDef,null,2)}`)
+        trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.schemaDef)}`)
 
+        this.$fields = this.$properties.concat(this.$references);
         let name = this.collectionName;
         if (Object.keys(this.schemaDef).length) {
             let schema = new Schema(this.schemaDef, {_id: false, versionKey: false});
@@ -49,7 +53,7 @@ export class ModelFactory implements IModelFactory {
             this.helper = new ModelHelper(this);
         }
 
-        let modelCtrl: IController = new ModelController(this);
+        let modelCtrl: IModelController = new ModelController(this);
         let v1 = routers.get('v1');
         if (this.actions) {
             trace && trace(`Register route: /${name}`);
@@ -61,6 +65,6 @@ export class ModelFactory implements IModelFactory {
         }
 
         v1.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
-        v1.post(`/${name}/:_id/([\$])method/:_name`, modelCtrl.executeMethod);
+        v1.post(`/${name}/:_id/([\$])execute/:_name`, modelCtrl.executeMethod);
     } 
 }

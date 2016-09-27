@@ -20,7 +20,8 @@ export class ModelActions implements IModelActions {
 
     query = (_: _, filter: Object = {}, options?: any) => {
         options = options || {};
-        let query: Query<any> = this.modelFactory.model.find(filter, this.modelFactory.properties.join(' '));
+        let fields = this.modelFactory.$fields.join(' ');
+        let query: Query<any> = this.modelFactory.model.find(filter, fields);
         if (options.includes) this.populateQuery(query, options.includes);
         return (<any>query).exec(_);
     }
@@ -46,14 +47,14 @@ export class ModelActions implements IModelActions {
         item._updatedAt = Date.now();
         let data: any = { $set: item };
         if (options && options.deleteMissing) {
-            for (let key of this.modelFactory.properties) {
+            for (let key of this.modelFactory.$fields) {
                 if (!item.hasOwnProperty(key)) {
                     data.$unset = data.$unset || {};
                     data.$unset[key] = 1;
                 }
             }
         }
-        //console.log("Update Item: ",item);
+        
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let doc = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, context: 'query' }, _);
         return doc && doc.toObject();
@@ -63,10 +64,10 @@ export class ModelActions implements IModelActions {
 
         let doc = this.read(_, _id);
         if (doc) {
-            //console.log(`update ${_id}`);
+           // console.log(`update ${_id}`);
             return this.update(_, _id, item, options);
         } else {
-            //console.log(`create ${_id}`);
+           // console.log(`create ${_id}`);
             return this.create(_, item);
         }
     };
