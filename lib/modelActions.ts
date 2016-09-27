@@ -77,23 +77,53 @@ export class ModelActions implements IModelActions {
     }
 
     private populateQuery = (query: Query<any>, includes: any): void => {
-        try {
-            includes = JSON.parse(includes);
-        } catch (err) { }
+        function parseIncludesStr(_includes) {
+            function parseIncludeStr(_include) {
+                let opt: any = {};
+                if (_include.indexOf('.')) {
+                    let parts = _include.split('.');
+                    opt.path = parts[0];
+                    opt.select = parts[1];
+                } else {
+                    opt.path = _include;
+                }
+                transformed.push(opt);
+            }
+            let transformed = [];
+            if (_includes.indexOf(',')) {
+                _includes.split(',').forEach(i => {
+                    parseIncludeStr(i);
+                });
+            } else {
+                 parseIncludeStr(_includes);
+            }
+            return transformed;
+        }
+
+
+        if (includes.charAt(0) === '{' || includes.charAt(0) === '[') {
+            try {
+                includes = JSON.parse(includes);
+            } catch (err) {
+                throw new Error('JSON includes filter is not valid');
+            }
+        }
+
         // transform parameter to array of objects
         if (typeof includes === "string") {
-            includes = [{ path: includes }];
+            includes = parseIncludesStr(includes);
         }
         if (!Array.isArray(includes)) {
             includes = [includes];
         }
         for (let include of includes) {
             let _model = this.modelFactory.model;
-            let propPath = _model.schema['paths'][include.path];
-            if (!propPath) throw new Error(`path ${include.path} not found in collection ${_model.collection.name}`);
-            let refModelName = propPath.path;
+            let _treeEntry = _model.schema['tree'][include.path];
+            let _ref = _treeEntry ? (Array.isArray(_treeEntry) ? _treeEntry[0].ref : _treeEntry.ref) : null;
+            if (!_ref) throw new Error(`path '${include.path}' not found in collection '${_model.collection.name}'`);
+
             // specifying model when populate is necessary for multiple database usage
-            let mf = ModelRegistry.getByName(refModelName)
+            let mf = ModelRegistry.getByName(_ref)
             if (!mf) throw new Error(`Class hasn't been registered for model '${include.path}'.`);
             include.model = mf.model;
             // populate is done here !!!
