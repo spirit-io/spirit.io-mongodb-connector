@@ -9,6 +9,7 @@ import { ConnectionHelper } from './connectionHelper';
 import express = require ('express');
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const idValidator = require('mongoose-id-validator');
 
 let trace;// = console.log;
 
@@ -44,10 +45,11 @@ export class ModelFactory implements IModelFactory {
         this.$fields = this.$properties.concat(this.$references);
         let name = this.collectionName;
         if (Object.keys(this.schemaDef).length) {
+            let db = ConnectionHelper.get(this.datasource || 'mongodb:default');
             let schema = new Schema(this.schemaDef, {_id: false, versionKey: false});
             schema.plugin(uniqueValidator);
+            schema.plugin(idValidator, {connection: db});
             
-            let db = ConnectionHelper.get(this.datasource || 'mongodb:default');
             this.model = db.model(this.collectionName, schema, this.collectionName);
             this.actions = new ModelActions(this);
             this.helper = new ModelHelper(this);

@@ -3,15 +3,11 @@ import { IModelActions } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, DocumentQuery} from 'mongoose';
-
+const uuid = require('node-uuid');
 const mongoose = require('mongoose');
 
 function ensureId(item: any) {
-    if (item._id && typeof item._id === "string") {
-        item._id = mongoose.Types.ObjectId(item._id);
-    } else {
-        item._id = item._id || mongoose.Types.ObjectId();
-    }
+    item._id = item._id || uuid.v4();
 }
 
 export class ModelActions implements IModelActions {
