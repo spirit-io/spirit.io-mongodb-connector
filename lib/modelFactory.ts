@@ -22,6 +22,7 @@ export class ModelFactory implements IModelFactory {
     public $statics: string[];
     public $methods: string[];
     public $fields: string[];
+    public $plurals: string[];
     public schemaDef: Object;
     public schema: Schema;
     public model: Model<any>;
@@ -35,6 +36,7 @@ export class ModelFactory implements IModelFactory {
         this.schemaDef = {};
         this.$properties = [];
         this.$references = [];
+        this.$plurals = [];
         this.$statics = [];
         this.$methods = [];
     }
@@ -63,6 +65,7 @@ export class ModelFactory implements IModelFactory {
             v1.get(`/${name}/:_id`, modelCtrl.read);
             v1.post(`/${name}`, modelCtrl.create);
             v1.put(`/${name}/:_id`, modelCtrl.update);
+            v1.patch(`/${name}/:_id`, modelCtrl.patch);
             v1.delete(`/${name}/:_id`, modelCtrl.delete);
         }
 

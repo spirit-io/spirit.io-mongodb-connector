@@ -42,6 +42,13 @@ export class ModelController implements IModelController {
     update = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
         let item: any = req.body;
+        let result = this._actions.update(_, _id, item, {deleteMissing: true});
+        res.json(result);
+    }
+
+    patch = (req: express.Request, res: express.Response, _: _): void => {
+        let _id: string = req.params['_id'];
+        let item: any = req.body;
         let result = this._actions.update(_, _id, item);
         res.json(result);
     }

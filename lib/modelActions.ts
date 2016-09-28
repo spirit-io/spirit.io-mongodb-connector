@@ -39,18 +39,34 @@ export class ModelActions implements IModelActions {
     }
 
     update = (_: _, _id: any, item: any, options?: any) => {
-        if (item._id) delete item._id;
+        if (item.hasOwnProperty('_id')) delete item._id;
         item._updatedAt = Date.now();
-        let data: any = { $set: item };
+        let data: any = {};
         if (options && options.deleteMissing) {
             for (let key of this.modelFactory.$fields) {
                 if (!item.hasOwnProperty(key)) {
-                    data.$unset = data.$unset || {};
-                    data.$unset[key] = 1;
+                    if (key.indexOf('_') !== 0) {
+                        data.$unset = data.$unset || {};
+                        data.$unset[key] = 1;
+                    }
+                } else {
+                    data.$set = data.$set || {};
+                    data.$set[key] = item[key];
+                }
+            }
+        } else {
+            for (let key of this.modelFactory.$fields) {
+                if (item.hasOwnProperty(key)) {
+                    if (this.modelFactory.$plurals.indexOf(key) !== -1) {
+                        data.$addToSet = data.$addToSet || {};
+                        data.$addToSet[key] = { $each:  (Array.isArray(item[key]) ? item[key] : [item[key]])};
+                    } else {
+                        data.$set = data.$set || {};
+                        data.$set[key] = item[key];
+                    }
                 }
             }
         }
-        
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let doc = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, context: 'query' }, _);
         return doc && doc.toObject();
