@@ -61,21 +61,21 @@ export class ModelController implements IModelController {
     }
 
     create = (req: express.Request, res: express.Response, _: _): void => {
-        let item: any = req.body;
+        let item: any = req['body'];
         let result = this._actions.create(_, item);
         res.json(result);
     }
 
     update = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
-        let item: any = req.body;
+        let item: any = req['body'];
         let result = this._actions.update(_, _id, item, {deleteMissing: true});
         res.json(result);
     }
 
     patch = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
-        let item: any = req.body;
+        let item: any = req['body'];
         let result = this._actions.update(_, _id, item);
         res.json(result);
     }
