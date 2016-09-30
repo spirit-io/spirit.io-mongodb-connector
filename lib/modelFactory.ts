@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 const idValidator = require('mongoose-id-validator');
 
+mongoose.set('debug', true);
 let trace;// = console.log;
 
 export class ModelFactory implements IModelFactory {
@@ -61,15 +62,21 @@ export class ModelFactory implements IModelFactory {
         let v1 = routers.get('v1');
         if (this.actions) {
             trace && trace(`Register route: /${name}`);
+            // handle main requests
             v1.get(`/${name}`, modelCtrl.query);
             v1.get(`/${name}/:_id`, modelCtrl.read);
             v1.post(`/${name}`, modelCtrl.create);
             v1.put(`/${name}/:_id`, modelCtrl.update);
             v1.patch(`/${name}/:_id`, modelCtrl.patch);
             v1.delete(`/${name}/:_id`, modelCtrl.delete);
+            // handle references requests
+            v1.get(`/${name}/:_id/:_ref`, modelCtrl.read);
         }
 
-        v1.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
-        v1.post(`/${name}/:_id/([\$])execute/:_name`, modelCtrl.executeMethod);
+        if (this.helper) {
+            // handle execution requests
+            v1.post(`/${name}/([\$])service/:_name`, modelCtrl.executeService);
+            v1.post(`/${name}/:_id/([\$])execute/:_name`, modelCtrl.executeMethod);
+        }
     } 
 }

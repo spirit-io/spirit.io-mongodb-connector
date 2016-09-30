@@ -2,6 +2,7 @@ import { _ } from 'streamline-runtime';
 import { IModelActions } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
+import { SchemaHelper } from './SchemaHelper';
 import { Schema, Model, Query, DocumentQuery} from 'mongoose';
 const uuid = require('node-uuid');
 const mongoose = require('mongoose');
@@ -18,14 +19,14 @@ export class ModelActions implements IModelActions {
         options = options || {};
         let fields = this.modelFactory.$fields.join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
-        if (options.includes) this.populateQuery(query, options.includes);
+        if (options.includes) this.populateQuery(query, options.includes, options.refModel);
         return (<any>query).exec(_);
     }
 
     read = (_: _, id: any, options?: any) => {
         options = options || {};
         let query: Query<any> = this.modelFactory.model.findById(id);
-        if (options.includes) this.populateQuery(query, options.includes);
+        if (options.includes) this.populateQuery(query, options.includes, options.refModel);
         return (<any>query).exec(_);
     }
 
@@ -88,7 +89,7 @@ export class ModelActions implements IModelActions {
         return this.modelFactory.model.remove({ _id: _id }, _);
     }
 
-    private populateQuery = (query: Query<any>, includes: any): void => {
+    private populateQuery = (query: Query<any>, includes: any, _model: Model<any>): void => {
         function parseIncludesStr(_includes) {
             function parseIncludeStr(_include) {
                 let opt: any = {};
@@ -129,15 +130,7 @@ export class ModelActions implements IModelActions {
             includes = [includes];
         }
         for (let include of includes) {
-            let _model = this.modelFactory.model;
-            let _treeEntry = _model.schema['tree'][include.path];
-            let _ref = _treeEntry ? (Array.isArray(_treeEntry) ? _treeEntry[0].ref : _treeEntry.ref) : null;
-            if (!_ref) throw new Error(`path '${include.path}' not found in collection '${_model.collection.name}'`);
-
-            // specifying model when populate is necessary for multiple database usage
-            let mf = ModelRegistry.getByName(_ref)
-            if (!mf) throw new Error(`Class hasn't been registered for model '${include.path}'.`);
-            include.model = mf.model;
+            include.model = SchemaHelper.getModelFactoryByPath(_model || this.modelFactory.model, include.path).model;
             // populate is done here !!!
             query = query.populate(include);
         }

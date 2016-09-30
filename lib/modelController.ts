@@ -1,6 +1,8 @@
 import { _ } from 'streamline-runtime';
 import express = require("express");
 import { IModelController, IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
+import { SchemaHelper } from './SchemaHelper';
+import { Model } from 'mongoose';
 
 export class ModelController implements IModelController {
 
@@ -27,10 +29,35 @@ export class ModelController implements IModelController {
 
     read = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
+        let _ref: string = req.params['_ref'];
         let includes: string = req.query['includes'];
-        let result = this._actions.read(_, _id, { includes: includes });
-        if (!result) res.sendStatus(404);
-        else res.json(result);
+
+        let readOptions = _ref ? {} : { includes: includes };
+        let result = this._actions.read(_, _id, readOptions);
+        if (!result) {
+            res.sendStatus(404);
+        } else {
+            if (_ref) {
+                let refRes: any;
+                let refModelFactory = SchemaHelper.getModelFactoryByPath((<Model<any>>this.modelFactory.model), _ref);
+
+                if (this.modelFactory.$plurals.indexOf(_ref) !== -1) {
+                    let filter = {_id: {$in: result[_ref]}};
+                    refRes = refModelFactory.actions.query(_, filter, { includes: includes });
+                    res.send(refRes);
+                } else {
+                    refRes = refModelFactory.actions.read(_, result[_ref], { includes: includes });
+                    if (!refRes) {
+                        res.sendStatus(404);
+                    } else {
+                        res.send(refRes);
+                    }
+                }
+            } else {
+                res.json(result);
+            }
+            
+        }
     }
 
     create = (req: express.Request, res: express.Response, _: _): void => {
