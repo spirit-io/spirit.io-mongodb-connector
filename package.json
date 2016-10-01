@@ -14,7 +14,10 @@
     "node-uuid": "^1.4.7",
     "mongoose": "^4.6.0",
     "mongoose-id-validator": "^0.3.0",
-    "mongoose-unique-validator": "^1.0.2"
+    "mongoose-unique-validator": "^1.0.2",
+    "streamline": "^2.0.10",
+    "streamline-node": "^1.0.4",
+    "streamline-runtime": "^1.0.31"
   },
   "devDependencies": {
     "chai": "^3.5.0",
