@@ -1,4 +1,5 @@
 import { _ } from 'streamline-runtime';
+import { ModelFactoryBase } from 'spirit.io/lib/base'
 import { IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces'
 import { Connection, Schema, Model, Query } from 'mongoose';
 import { ModelActions } from './modelActions';
@@ -13,32 +14,14 @@ const idValidator = require('mongoose-id-validator');
 
 let trace;// = console.log;
 
-export class ModelFactory implements IModelFactory {
+export class ModelFactory extends ModelFactoryBase implements IModelFactory {
 
-    public targetClass: any;
-    public collectionName: string;
-    public $properties: string[];
-    public $references: string[];
-    public $statics: string[];
-    public $methods: string[];
-    public $fields: string[];
-    public $plurals: string[];
-    public schemaDef: Object;
+
     public schema: Schema;
     public model: Model<any>;
-    public actions: IModelActions;
-    public helper: IModelHelper;
-    public datasource: string;
 
     constructor(targetClass: any) {
-        this.targetClass = targetClass;
-        this.collectionName = targetClass._collectionName;
-        this.schemaDef = {};
-        this.$properties = [];
-        this.$references = [];
-        this.$plurals = [];
-        this.$statics = [];
-        this.$methods = [];
+        super(targetClass);
     }
 
     setup = (routers: Map<string, express.Router>) => {
@@ -47,7 +30,7 @@ export class ModelFactory implements IModelFactory {
         this.$fields = this.$properties.concat(this.$references);
         let name = this.collectionName;
         if (Object.keys(this.schemaDef).length) {
-            let db = ConnectionHelper.get(this.datasource || 'mongodb:default');
+            let db = ConnectionHelper.get(this.datasource || 'mongodb');
             let schema = new Schema(this.schemaDef, {_id: false, versionKey: false});
             schema.plugin(uniqueValidator);
             schema.plugin(idValidator, {connection: db});

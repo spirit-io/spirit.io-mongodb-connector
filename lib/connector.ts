@@ -6,21 +6,27 @@ const mongoose = require('mongoose');
 
 export class MongodbConnector implements IConnector {
     private _datasource: string = 'mongodb';
+    private _config: any;
 
-    constructor(config: any = {}) {
-        if (config.mongoose) {
-            if (config.mongoose.debug) mongoose.set('debug', true);
+    get datasource(): string {
+        return this._datasource;
+    }
+
+    set config(config: any) {
+        this._config = config || {};
+        if (this._config.mongoose) {
+            if (this._config.mongoose.debug) mongoose.set('debug', true);
         }
     }
+    get config() {
+        return this._config;
+    }
+
     connect = (datasourceKey: string, parameters: any): any => {
         ConnectionHelper.connect(datasourceKey, parameters);
     }
 
     createModelFactory = (myClass: any): IModelFactory => {
         return new ModelFactory(myClass);
-    }
-
-    get datasource(): string {
-        return this._datasource;
     }
 }

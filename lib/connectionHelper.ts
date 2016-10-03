@@ -19,7 +19,7 @@ export class ConnectionHelper {
 
     public static get(datasourceKey: string): Connection {
         let c = _.context['mongooseConnections'].get(datasourceKey);
-        if (!c) throw new Error(`Datasource ${datasourceKey} not registered.`);
+        if (!c) throw new Error(`Datasource '${datasourceKey}' not registered. At least one datasource must be defined in your configuration file.`);
         return c;
     }
 }
