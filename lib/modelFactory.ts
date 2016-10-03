@@ -27,7 +27,7 @@ export class ModelFactory extends ModelFactoryBase implements IModelFactory {
     setup = (routers: Map<string, express.Router>) => {
         trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.schemaDef)}`)
 
-        this.$fields = this.$properties.concat(this.$references);
+        this.$fields = this.$properties.concat(Object.keys(this.$references));
         let name = this.collectionName;
         if (Object.keys(this.schemaDef).length) {
             let db = ConnectionHelper.get(this.datasource || 'mongodb');

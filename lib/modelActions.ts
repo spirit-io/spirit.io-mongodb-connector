@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { IModelActions } from 'spirit.io/lib/interfaces';
+import { IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { SchemaHelper } from './SchemaHelper';
@@ -36,7 +36,10 @@ export class ModelActions implements IModelActions {
         item._updatedAt = Date.now();
         //console.log("Create Item: ",item);
         let doc: any = this.modelFactory.model.create(item, _);
-        return doc.toObject();
+        let res = doc.toObject();
+        // populate reverse references
+        this.processReverse(_, doc._id, res);
+        return res;
     }
 
     update = (_: _, _id: any, item: any, options?: any) => {
@@ -97,6 +100,21 @@ export class ModelActions implements IModelActions {
 
     delete = (_: _, _id: any) => {
         return this.modelFactory.model.remove({ _id: _id }, _);
+    }
+
+    private processReverse = (_: _, _id: string, item: any, _model?: Model<any>): void => {
+        for (let path in this.modelFactory.$references) {
+            let refOpt = this.modelFactory.$references[path] || {};
+            if (refOpt.$reverse && item.hasOwnProperty(path)) {
+                let revModelFactory: IModelFactory = SchemaHelper.getModelFactoryByPath(_model || this.modelFactory.model, path);
+                let refItem = {};
+                refItem[refOpt.$reverse] = revModelFactory.$plurals.indexOf(refOpt.$reverse) !== -1 ? [_id] : _id;
+                let refIds: Array<string> = Array.isArray(item[path]) ? item[path] : [item[path]];
+                refIds.forEach_(_, function(_, refId) {
+                    revModelFactory.actions.update(_, refId, refItem);
+                });
+            }
+        }
     }
 
     private populateQuery = (query: Query<any>, includes: any, _model: Model<any>): void => {
