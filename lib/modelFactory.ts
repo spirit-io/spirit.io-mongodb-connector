@@ -11,7 +11,6 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 const idValidator = require('mongoose-id-validator');
 
-mongoose.set('debug', true);
 let trace;// = console.log;
 
 export class ModelFactory implements IModelFactory {
