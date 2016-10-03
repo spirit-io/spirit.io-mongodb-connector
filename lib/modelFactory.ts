@@ -53,6 +53,8 @@ export class ModelFactory extends ModelFactoryBase implements IModelFactory {
             v1.delete(`/${name}/:_id`, modelCtrl.delete);
             // handle references requests
             v1.get(`/${name}/:_id/:_ref`, modelCtrl.read);
+            v1.put(`/${name}/:_id/:_ref`, modelCtrl.update);
+            v1.patch(`/${name}/:_id/:_ref`, modelCtrl.patch);
         }
 
         if (this.helper) {

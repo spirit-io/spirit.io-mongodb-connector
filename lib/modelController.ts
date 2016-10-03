@@ -68,16 +68,34 @@ export class ModelController implements IModelController {
 
     update = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
+        let _ref: string = req.params['_ref'];
         let item: any = req['body'];
-        let result = this._actions.update(_, _id, item, {deleteMissing: true});
-        res.json(result);
+
+        if (_ref) {
+            let data = {};
+            data[_ref] = item;
+            let result = this._actions.update(_, _id, data, {deleteMissing: [_ref]});
+            res.json(result);
+        } else {
+            let result = this._actions.update(_, _id, item, {deleteMissing: true});
+            res.json(result);
+        }
     }
 
     patch = (req: express.Request, res: express.Response, _: _): void => {
         let _id: string = req.params['_id'];
+        let _ref: string = req.params['_ref'];
         let item: any = req['body'];
-        let result = this._actions.update(_, _id, item);
-        res.json(result);
+
+        if (_ref) {
+            let data = {};
+            data[_ref] = item;
+            let result = this._actions.update(_, _id, data);
+            res.json(result);
+        } else {
+            let result = this._actions.update(_, _id, item);
+            res.json(result);
+        }
     }
 
     delete = (req: express.Request, res: express.Response, _: _): void => {

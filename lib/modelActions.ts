@@ -44,15 +44,25 @@ export class ModelActions implements IModelActions {
         item._updatedAt = Date.now();
         let data: any = {};
         if (options && options.deleteMissing) {
-            for (let key of this.modelFactory.$fields) {
-                if (!item.hasOwnProperty(key)) {
-                    if (key.indexOf('_') !== 0) {
-                        data.$unset = data.$unset || {};
-                        data.$unset[key] = 1;
+            // deleteMissing can be used for erasing properties only
+            if (Array.isArray(options.deleteMissing)) {
+                for (let key of options.deleteMissing) {
+                    if (this.modelFactory.$fields.indexOf(key) !== -1 && item.hasOwnProperty(key)) {
+                        data.$set = data.$set || {};
+                        data.$set[key] = item[key];
                     }
-                } else {
-                    data.$set = data.$set || {};
-                    data.$set[key] = item[key];
+                }
+            } else {
+                for (let key of this.modelFactory.$fields) {
+                    if (!item.hasOwnProperty(key)) {
+                        if (key.indexOf('_') !== 0) {
+                            data.$unset = data.$unset || {};
+                            data.$unset[key] = 1;
+                        }
+                    } else {
+                        data.$set = data.$set || {};
+                        data.$set[key] = item[key];
+                    }
                 }
             }
         } else {
