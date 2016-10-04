@@ -74,7 +74,7 @@ export class ModelController implements IModelController {
         if (_ref) {
             let data = {};
             data[_ref] = item;
-            let result = this._actions.update(_, _id, data, {deleteMissing: [_ref]});
+            let result = this._actions.update(_, _id, data, {reference: _ref, deleteMissing: true});
             res.json(result);
         } else {
             let result = this._actions.update(_, _id, item, {deleteMissing: true});
@@ -90,7 +90,7 @@ export class ModelController implements IModelController {
         if (_ref) {
             let data = {};
             data[_ref] = item;
-            let result = this._actions.update(_, _id, data);
+            let result = this._actions.update(_, _id, data, {reference: _ref});
             res.json(result);
         } else {
             let result = this._actions.update(_, _id, item);

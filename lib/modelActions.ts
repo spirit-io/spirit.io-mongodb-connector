@@ -43,17 +43,17 @@ export class ModelActions implements IModelActions {
     }
 
     update = (_: _, _id: any, item: any, options?: any) => {
+        options = options || {};
         if (item.hasOwnProperty('_id')) delete item._id;
         item._updatedAt = Date.now();
         let data: any = {};
-        if (options && options.deleteMissing) {
-            // deleteMissing can be used for erasing properties only
-            if (Array.isArray(options.deleteMissing)) {
-                for (let key of options.deleteMissing) {
-                    if (this.modelFactory.$fields.indexOf(key) !== -1 && item.hasOwnProperty(key)) {
-                        data.$set = data.$set || {};
-                        data.$set[key] = item[key];
-                    }
+        let reverseProperties: string[] = [];
+        if (options.deleteMissing) {
+            if (options.reference) {
+                let key = options.reference;
+                if (this.modelFactory.$fields.indexOf(key) !== -1 && item.hasOwnProperty(key)) {
+                    data.$set = data.$set || {};
+                    data.$set[key] = item[key];
                 }
             } else {
                 for (let key of this.modelFactory.$fields) {
@@ -83,7 +83,9 @@ export class ModelActions implements IModelActions {
         }
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let doc = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, context: 'query' }, _);
-        return doc && doc.toObject();
+        let res = doc && doc.toObject();
+        this.processReverse(_, doc._id, res, options.reference);
+        return res;
     }
 
     createOrUpdate = function (_: _, _id: any, item: any, options?: any) {
@@ -102,17 +104,44 @@ export class ModelActions implements IModelActions {
         return this.modelFactory.model.remove({ _id: _id }, _);
     }
 
-    private processReverse = (_: _, _id: string, item: any, _model?: Model<any>): void => {
+    private processReverse = (_: _, _id: string, item: any, subProperty?: string): void => {
         for (let path in this.modelFactory.$references) {
             let refOpt = this.modelFactory.$references[path] || {};
             if (refOpt.$reverse && item.hasOwnProperty(path)) {
-                let revModelFactory: IModelFactory = SchemaHelper.getModelFactoryByPath(_model || this.modelFactory.model, path);
+                let revModelFactory: IModelFactory = subProperty ? SchemaHelper.getModelFactoryByPath(this.modelFactory.model, subProperty) : this.modelFactory;
+
+                let revIsPlural = revModelFactory.$plurals.indexOf(refOpt.$reverse) !== -1;
                 let refItem = {};
-                refItem[refOpt.$reverse] = revModelFactory.$plurals.indexOf(refOpt.$reverse) !== -1 ? [_id] : _id;
+                refItem[refOpt.$reverse] = revIsPlural ? [_id] : _id;
+
+                let update;
+                if (revIsPlural) {
+                    update = {$addToSet: {}};
+                    update.$addToSet[refOpt.$reverse] = { $each: [_id] };
+                } else {
+                    update = {$set: {}};
+                    update.$set[refOpt.$reverse] = _id;
+                }
+                
                 let refIds: Array<string> = Array.isArray(item[path]) ? item[path] : [item[path]];
-                refIds.forEach_(_, function(_, refId) {
-                    revModelFactory.actions.update(_, refId, refItem);
-                });
+                //console.log("Update: "+JSON.stringify({ _id: { $in: refIds}})+":"+JSON.stringify(update));
+                
+                // update document still referenced
+                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds}}, update, { multi: true }, _);
+
+
+                let update2;
+                if (revIsPlural) {
+                    update2 = {$pull: {}};
+                    update2.$pull[refOpt.$reverse] = { $in: [_id] };
+                } else {
+                    update2 = {$unset: {}};
+                    update2.$unset[refOpt.$reverse] = 1;
+                }
+                //console.log("Update2: "+JSON.stringify({ _id: { $nin: refIds}})+":"+JSON.stringify(update2);
+
+                // update documents not referenced anymore
+                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds}}, update2, { multi: true }, _);
             }
         }
     }
