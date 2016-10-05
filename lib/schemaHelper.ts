@@ -9,7 +9,7 @@ export class SchemaHelper {
             if (!_ref) throw new Error(`path '${path}' not found in collection '${model.collection.name}'`);
 
             // specifying model when populate is necessary for multiple database usage
-            let mf = ModelRegistry.getByName(_ref)
+            let mf = ModelRegistry.getFactoryByName(_ref)
             if (!mf) throw new Error(`Class hasn't been registered for model '${path}'.`);
             return mf;
     }
