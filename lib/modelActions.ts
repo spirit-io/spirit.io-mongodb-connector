@@ -34,7 +34,6 @@ export class ModelActions implements IModelActions {
         ensureId(item);
         item._createdAt = Date.now();
         item._updatedAt = Date.now();
-        //console.log("Create Item: ",item);
         let doc: any = this.modelFactory.model.create(item, _);
         let res = doc.toObject();
         // populate reverse references

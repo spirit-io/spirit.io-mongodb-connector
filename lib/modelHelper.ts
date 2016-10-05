@@ -4,45 +4,40 @@ import { ModelRegistry } from 'spirit.io/lib/core';
 
 export class ModelHelper implements IModelHelper {
 
-    private _actions: IModelActions;
-    private _target: any;
 
-    constructor(private modelFactory: IModelFactory) {
-        this._actions = modelFactory.actions;
-        this._target = modelFactory.targetClass;
-    }
+    constructor(private modelFactory: IModelFactory) {}
 
     fetchInstances = (_: _, filter?: any) => {
         let instances: any = [];
-        let docs = this._actions.query(_, filter);
+        let docs = this.modelFactory.actions.query(_, filter);
         for (var doc of docs) {
-            instances.push(new this._target.prototype.constructor(doc.toObject()));
+            instances.push(new this.modelFactory.targetClass.prototype.constructor(doc.toObject()));
         }
         return instances;
     }
 
     fetchInstance = (_:_, _id: any) => {
-        let doc = this._actions.read(_, _id);
+        let doc = this.modelFactory.actions.read(_, _id);
         if (!doc) return;
-        return new this._target.prototype.constructor(doc.toObject());
+        return new this.modelFactory.targetClass.prototype.constructor(doc.toObject());
     }
 
     saveInstance = (_:_, instance: any, options?: any) => {
-        let item = this._actions.createOrUpdate(_, instance._id, this.serialize(instance, {ignoreNull: true}), options);
+        let item = this.modelFactory.actions.createOrUpdate(_, instance._id, this.serialize(instance, {ignoreNull: true}), options);
         this.updateValues(instance, item, {deleteMissing: true});
         if (options && options.returnInstance) return instance;
         return;
     }
 
     deleteInstance = (_:_, instance: any): any => {
-        return this._actions.delete(_, instance._id);
+        return this.modelFactory.actions.delete(_, instance._id);
     }
 
     serialize = (instance: any, options?: any): any => {
         options = options || {};
         let item: any = {};
         for (let key of this.modelFactory.$fields) {
-            if (instance[key]) item[key] = instance[key];
+            if (instance[key] !== undefined) item[key] = instance[key];
             if (!options.ignoreNull) if (instance[key] === undefined) item[key] = undefined;
         }
         //console.log("Serialize:",item);
@@ -56,11 +51,10 @@ export class ModelHelper implements IModelHelper {
                 instance[key] = item[key];
             }
         }
-
         if (options && options.deleteMissing) {
             // reinitialize deleted values
             for (let key of this.modelFactory.$fields) {
-                if (!item.hasOwnProperty(key)) {
+                if (item[key] === undefined) {
                     instance[key] = undefined;
                 }
             }
