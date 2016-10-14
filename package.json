@@ -4,8 +4,10 @@
   "description": "Typescript mongodb connector for spirit.io framework",
   "main": "index.js",
   "scripts": {
-    "start": "node sample",
-    "test": "node test"
+    "build": "node build",
+    "test2": "node ./node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- --compilers ts:streamline/register test/orm",
+    "test3": "cross-env.js NODE_ENV=test && node ./node_modules/nyc/bin/nyc.js ./node_modules/.bin/_mocha",
+    "test": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/**/*.spec.ts"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
@@ -20,7 +22,11 @@
     "streamline-runtime": "^1.0.31"
   },
   "devDependencies": {
+    "babel-plugin-istanbul": "^2.0.1",
     "chai": "^3.5.0",
-    "mocha": "^3.0.2"
+    "cross-env": "^3.1.2",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.0.2",
+    "nyc": "^8.3.1"
   }
 }

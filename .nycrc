@@ -1,0 +1,26 @@
+{
+    "include": [
+      "lib/*.ts",
+      "lib/**/*.ts"
+    ],
+    "exclude": [
+      "test",
+      "typings",
+      "node_modules"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "streamline/register",
+      "babel-register"
+    ],
+    "reporter": [
+      "json",
+      "html"
+    ],
+    "sourceMap": false,
+    "instrument": false,
+    "all": true,
+    "check-coverage": true
+}

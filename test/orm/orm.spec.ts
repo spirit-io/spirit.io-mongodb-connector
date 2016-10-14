@@ -1,7 +1,10 @@
 import { _ } from 'streamline-runtime';
+import { Fixtures } from '../fixtures/setup';
+
 import { ModelA } from '../models';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
 import { AdminHelper } from 'spirit.io/lib/core';
+
 
 const expect = require('chai').expect;
 
@@ -23,13 +26,18 @@ const modelsA: any = {
 };
 
 let modelAInstances = [];
+let db;
 
-let db = AdminHelper.model(ModelA);
+before(function(_) {
+    Fixtures.setup(_);
+    db = AdminHelper.model(ModelA);
+});
+
 /**
  * Unit tests
  */
 describe('User Model Unit Tests:', () => {
-
+    
     describe('CRUD validation on simple class', () => {
 
         it('save modelA instance with valid values should work', (_) => {

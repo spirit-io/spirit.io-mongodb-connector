@@ -1,5 +1,5 @@
 "use strict";
-import { MongodbConnector } from 'spirit.io-mongodb-connector';
+import { MongodbConnector } from '..';
 import { Server } from 'spirit.io/lib/application';
 const Mocha = require('mocha'),
     fs = require('fs'),
@@ -16,7 +16,7 @@ const config = {
     connectors: {
         mongodb: {
             datasources: {
-                "mongodb": {uri: "mongodb://localhost/spirit-test", options: {}}
+                "mongodb": {uri: "mongodb://localhost:27032/spirit-test", options: {}}
             },
             mongoose: {
                 debug: false
