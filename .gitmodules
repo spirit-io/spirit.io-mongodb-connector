@@ -1,0 +1,3 @@
+[submodule "node_modules/spirit.io"]
+	path = node_modules/spirit.io
+	url = https://github.com/spirit-io/spirit.io.git
