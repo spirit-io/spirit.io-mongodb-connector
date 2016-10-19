@@ -3,24 +3,13 @@
       "lib/*.ts",
       "lib/**/*.ts"
     ],
-    "exclude": [
-      "test",
-      "typings",
-      "node_modules"
-    ],
     "extension": [
       ".ts"
     ],
-    "require": [
-      "streamline/register",
-      "babel-register"
-    ],
     "reporter": [
-      "json",
-      "html"
+      "lcov",
+      "text"
     ],
-    "sourceMap": false,
-    "instrument": false,
-    "all": true,
-    "check-coverage": true
+    "sourceMap": true,
+    "instrument": true
 }

@@ -7,8 +7,8 @@
         "noImplicitThis": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "sourceMap": true,
-        "inlineSources": true,
+        "sourceMap": false,
+        "inlineSources": false,
         "outDir": "dist",
         "moduleResolution": "node",
         "strictNullChecks": false

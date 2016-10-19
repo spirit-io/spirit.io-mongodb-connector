@@ -1,7 +1,7 @@
 require('streamline').register({});
 import { _ } from 'streamline-runtime';
 import { Server } from 'spirit.io/lib/application';
-import { MongodbConnector } from '../..';
+import { MongodbConnector } from '../../lib/connector';
 const flows = require('streamline-runtime').flows;
 const path = require('path');
 const config = {
