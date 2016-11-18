@@ -1,27 +1,30 @@
 {
-    "compilerOptions": {
-        "target": "es2015",
-        "module": "commonjs",
-        "noEmitOnError": true,
-        "noImplicitAny": false,
-        "noImplicitThis": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "sourceMap": false,
-        "inlineSources": false,
-        "outDir": "dist",
-        "moduleResolution": "node",
-        "strictNullChecks": false
-    },
-    "paths": {
-      "spirit.io/lib/*": ["node_modules/spirit.io/src/*"]
-    },
-    "filesGlob": [
-        "./**/*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "build",
-        "coverage"
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "noEmitOnError": true,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": false,
+    "inlineSources": false,
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "strictNullChecks": false,
+    "jsx": "None"
+  },
+  "paths": {
+    "spirit.io/lib/*": [
+      "node_modules/spirit.io/src/*"
     ]
+  },
+  "filesGlob": [
+    "./**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "coverage"
+  ]
 }

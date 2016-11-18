@@ -22,11 +22,11 @@ export class MongodbConnector implements IConnector {
         return this._config;
     }
 
-    connect = (datasourceKey: string, parameters: any): any => {
+    connect(datasourceKey: string, parameters: any): any {
         ConnectionHelper.connect(datasourceKey, parameters);
     }
 
-    createModelFactory = (myClass: any): IModelFactory => {
+    createModelFactory(myClass: any): IModelFactory {
         return new ModelFactory(myClass);
     }
 }

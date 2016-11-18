@@ -1,6 +1,7 @@
-// Placez vos paramètres dans ce fichier pour remplacer les paramètres par défaut et les paramètres utilisateur.
 {
     "files.exclude": {
-        //"**/*.js.map": true
+        "**/*.js.map": true
     }
+,
+"typescript.tsdk": "./node_modules/typescript/lib"
 }

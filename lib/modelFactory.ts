@@ -24,44 +24,19 @@ export class ModelFactory extends ModelFactoryBase implements IModelFactory {
         super(targetClass);
     }
 
-    setup = (routers: Map<string, express.Router>) => {
-        trace && trace(`Schema registered for collection ${this.collectionName}: ${require('util').inspect(this.schemaDef,null,2)}`)
-
-        this.$fields = this.$properties.concat(Object.keys(this.$references));
-        let name = this.collectionName;
-        if (Object.keys(this.schemaDef).length) {
+    setup (routers: Map<string, express.Router>) {
+        super.setup(routers, new ModelActions(this), new ModelHelper(this), new ModelController(this));
+        
+        if (Object.keys(this.$prototype).length) {
             let db = ConnectionHelper.get(this.datasource || 'mongodb');
-            let schema = new Schema(this.schemaDef, {_id: false, versionKey: false});
+            let schema = new Schema(this.$prototype, {_id: false, versionKey: false});
             schema.plugin(uniqueValidator);
             schema.plugin(idValidator, {connection: db});
             
             this.model = db.model(this.collectionName, schema, this.collectionName);
-            this.actions = new ModelActions(this);
-            this.helper = new ModelHelper(this);
+
         }
 
-        let routeName = name.substring(0,1).toLowerCase() + name.substring(1);
-        let modelCtrl: IModelController = new ModelController(this);
-        let v1 = routers.get('v1');
-        if (this.actions) {
-            trace && trace(`Register routes: /${routeName}`);
-            // handle main requests
-            v1.get(`/${routeName}`, modelCtrl.query);
-            v1.get(`/${routeName}/:_id`, modelCtrl.read);
-            v1.post(`/${routeName}`, modelCtrl.create);
-            v1.put(`/${routeName}/:_id`, modelCtrl.update);
-            v1.patch(`/${routeName}/:_id`, modelCtrl.patch);
-            v1.delete(`/${routeName}/:_id`, modelCtrl.delete);
-            // handle references requests
-            v1.get(`/${routeName}/:_id/:_ref`, modelCtrl.read);
-            v1.put(`/${routeName}/:_id/:_ref`, modelCtrl.update);
-            v1.patch(`/${routeName}/:_id/:_ref`, modelCtrl.patch);
-        }
-
-        if (this.helper) {
-            // handle execution requests
-            v1.post(`/${routeName}/([\$])service/:_name`, modelCtrl.executeService);
-            v1.post(`/${routeName}/:_id/([\$])execute/:_name`, modelCtrl.executeMethod);
-        }
+        
     } 
 }

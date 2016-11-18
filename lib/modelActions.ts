@@ -2,8 +2,7 @@ import { _ } from 'streamline-runtime';
 import { IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
-import { SchemaHelper } from './SchemaHelper';
-import { Schema, Model, Query, DocumentQuery} from 'mongoose';
+import { Schema, Model, Query, MongooseDocument } from 'mongoose';
 const uuid = require('node-uuid');
 const mongoose = require('mongoose');
 
@@ -15,43 +14,58 @@ export class ModelActions implements IModelActions {
 
     constructor(private modelFactory: ModelFactory) { }
 
-    query = (_: _, filter: Object = {}, options?: any) => {
+    query(_: _, filter: Object = {}, options?: any) {
         options = options || {};
         let fields = this.modelFactory.$fields.join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
-        if (options.includes) this.populateQuery(query, options.includes, options.refModel);
-        return (<any>query).exec(_);
+        if (options.includes) this.populateQuery(query, options.includes);
+        let docs = (<any>query).exec(_);
+        return docs && docs.map(doc => { return doc.toObject() });
     }
 
-    read = (_: _, id: any, options?: any) => {
+    read(_: _, id: any, options?: any) {
         options = options || {};
         let query: Query<any> = this.modelFactory.model.findById(id);
-        if (options.includes) this.populateQuery(query, options.includes, options.refModel);
-        return (<any>query).exec(_);
+        if (options.includes) this.populateQuery(query, options.includes);
+        let doc = (<any>query).exec(_);
+        let res = doc && doc.toObject();
+
+        if (!res) {
+            return null;
+        } else {
+            if (options.ref) {
+                let refRes: any;
+                let refModelFactory = this.modelFactory.getModelFactoryByPath(options.ref);
+
+                if (this.modelFactory.$plurals.indexOf(options.ref) !== -1) {
+                    let filter = { _id: { $in: res[options.ref] } };
+                    return refModelFactory.actions.query(_, filter, { includes: options.includes });
+                } else {
+                    return refModelFactory.actions.read(_, res[options.ref], { includes: options.includes });
+                }
+            } else {
+                return res;
+            }
+        }
     }
 
-    create = (_: _, item: any) => {
+    create(_: _, item: any, options?: any) {
         ensureId(item);
-        item._createdAt = Date.now();
-        item._updatedAt = Date.now();
-        let doc: any = this.modelFactory.model.create(item, _);
-        let res = doc.toObject();
-        // populate reverse references
-        this.processReverse(_, doc._id, res);
-        return res;
+        item._createdAt = new Date();
+        return this.update(_, item._id, item, options);
     }
 
-    update = (_: _, _id: any, item: any, options?: any) => {
+    update(_: _, _id: any, item: any, options?: any) {
         options = options || {};
-        if (item.hasOwnProperty('_id')) delete item._id;
-        item._updatedAt = Date.now();
+        item._updatedAt = new Date();
         let data: any = {};
         let reverseProperties: string[] = [];
         if (options.deleteMissing) {
-            if (options.reference) {
-                let key = options.reference;
+            if (options.ref) {
+                let key = options.ref;
                 if (this.modelFactory.$fields.indexOf(key) !== -1 && item.hasOwnProperty(key)) {
                     data.$set = data.$set || {};
+                    // TODO: body should not contains key... Maybe I got something with processReverse that I can't remember ?
                     data.$set[key] = item[key];
                 }
             } else {
@@ -68,11 +82,12 @@ export class ModelActions implements IModelActions {
                 }
             }
         } else {
+            // TODO : manage options.ref for PATCH operation.
             for (let key of this.modelFactory.$fields) {
                 if (item.hasOwnProperty(key)) {
                     if (this.modelFactory.$plurals.indexOf(key) !== -1) {
                         data.$addToSet = data.$addToSet || {};
-                        data.$addToSet[key] = { $each:  (Array.isArray(item[key]) ? item[key] : [item[key]])};
+                        data.$addToSet[key] = { $each: (Array.isArray(item[key]) ? item[key] : [item[key]]) };
                     } else {
                         data.$set = data.$set || {};
                         data.$set[key] = item[key];
@@ -81,33 +96,38 @@ export class ModelActions implements IModelActions {
             }
         }
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
-        let doc = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, context: 'query' }, _);
+        let query: any = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, upsert: true, context: 'query' } as any);
+        if (options.includes) this.populateQuery(query, options.includes);
+
+        let doc = (<Query<any>>query).exec(_);
         let res = doc && doc.toObject();
-        this.processReverse(_, doc._id, res, options.reference);
+
+        this.processReverse(_, doc._id, res, options.ref);
         return res;
     }
 
-    createOrUpdate = function (_: _, _id: any, item: any, options?: any) {
-
+    createOrUpdate(_: _, _id: any, item: any, options?: any) {
+        //console.log("Create or update document with values;", item);
         let doc = this.read(_, _id);
         if (doc) {
-           // console.log(`update ${_id}`);
+            // console.log(`update ${_id}`);
+            if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
             return this.update(_, _id, item, options);
         } else {
-           // console.log(`create ${_id}`);
-            return this.create(_, item);
+            // console.log(`create ${_id}`);
+            return this.create(_, item, options);
         }
     };
 
-    delete = (_: _, _id: any) => {
+    delete(_: _, _id: any) {
         return this.modelFactory.model.remove({ _id: _id }, _);
     }
 
-    private processReverse = (_: _, _id: string, item: any, subProperty?: string): void => {
+    private processReverse(_: _, _id: string, item: any, subProperty?: string): void {
         for (let path in this.modelFactory.$references) {
             let refOpt = this.modelFactory.$references[path] || {};
             if (refOpt.$reverse && item.hasOwnProperty(path)) {
-                let revModelFactory: IModelFactory = subProperty ? SchemaHelper.getModelFactoryByPath(this.modelFactory.model, subProperty) : this.modelFactory;
+                let revModelFactory: IModelFactory = subProperty ? this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
 
                 let revIsPlural = revModelFactory.$plurals.indexOf(refOpt.$reverse) !== -1;
                 let refItem = {};
@@ -115,78 +135,39 @@ export class ModelActions implements IModelActions {
 
                 let update;
                 if (revIsPlural) {
-                    update = {$addToSet: {}};
+                    update = { $addToSet: {} };
                     update.$addToSet[refOpt.$reverse] = { $each: [_id] };
                 } else {
-                    update = {$set: {}};
+                    update = { $set: {} };
                     update.$set[refOpt.$reverse] = _id;
                 }
-                
+
                 let refIds: Array<string> = Array.isArray(item[path]) ? item[path] : [item[path]];
                 //console.log("Update: "+JSON.stringify({ _id: { $in: refIds}})+":"+JSON.stringify(update));
-                
+
                 // update document still referenced
-                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds}}, update, { multi: true }, _);
+                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds } }, update, { multi: true }, _);
 
 
                 let update2;
                 if (revIsPlural) {
-                    update2 = {$pull: {}};
+                    update2 = { $pull: {} };
                     update2.$pull[refOpt.$reverse] = { $in: [_id] };
                 } else {
-                    update2 = {$unset: {}};
+                    update2 = { $unset: {} };
                     update2.$unset[refOpt.$reverse] = 1;
                 }
                 //console.log("Update2: "+JSON.stringify({ _id: { $nin: refIds}})+":"+JSON.stringify(update2);
 
                 // update documents not referenced anymore
-                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds}}, update2, { multi: true }, _);
+                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds } }, update2, { multi: true }, _);
             }
         }
     }
 
-    private populateQuery = (query: Query<any>, includes: any, _model: Model<any>): void => {
-        function parseIncludesStr(_includes) {
-            function parseIncludeStr(_include) {
-                let opt: any = {};
-                if (_include.indexOf('.')) {
-                    let parts = _include.split('.');
-                    opt.path = parts[0];
-                    opt.select = parts[1];
-                } else {
-                    opt.path = _include;
-                }
-                transformed.push(opt);
-            }
-            let transformed = [];
-            if (_includes.indexOf(',')) {
-                _includes.split(',').forEach(i => {
-                    parseIncludeStr(i);
-                });
-            } else {
-                 parseIncludeStr(_includes);
-            }
-            return transformed;
-        }
-
-
-        if (includes.charAt(0) === '{' || includes.charAt(0) === '[') {
-            try {
-                includes = JSON.parse(includes);
-            } catch (err) {
-                throw new Error('JSON includes filter is not valid');
-            }
-        }
-
-        // transform parameter to array of objects
-        if (typeof includes === "string") {
-            includes = parseIncludesStr(includes);
-        }
-        if (!Array.isArray(includes)) {
-            includes = [includes];
-        }
+    private populateQuery(query: Query<any>, includes: any): void {
         for (let include of includes) {
-            include.model = SchemaHelper.getModelFactoryByPath(_model || this.modelFactory.model, include.path).model;
+            include.model = this.modelFactory.getModelFactoryByPath(include.path).model;
             // populate is done here !!!
             query = query.populate(include);
         }

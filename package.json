@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "node build",
-    "test": "node ./node_modules/mocha/bin/_mocha",
-    "test:coverage": "npm run build && node ./node_modules/nyc/bin/nyc npm test"
+    "test:dev": "node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha",
+    "test": "npm run build && npm run test:dev",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Teddy Chambard",
   "license": "MIT",
