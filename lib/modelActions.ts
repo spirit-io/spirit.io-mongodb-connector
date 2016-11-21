@@ -57,7 +57,9 @@ export class ModelActions implements IModelActions {
 
     update(_: _, _id: any, item: any, options?: any) {
         options = options || {};
+        if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
         item._updatedAt = new Date();
+
         let data: any = {};
         let reverseProperties: string[] = [];
         if (options.deleteMissing) {
@@ -111,7 +113,6 @@ export class ModelActions implements IModelActions {
         let doc = this.read(_, _id);
         if (doc) {
             // console.log(`update ${_id}`);
-            if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
             return this.update(_, _id, item, options);
         } else {
             // console.log(`create ${_id}`);
