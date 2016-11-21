@@ -10,7 +10,8 @@ require('streamline').register();
 var transformJs = require('streamline/lib/transformSync').transformFileSync;
 
 function fixPath(path) {
-	return path.replace(/\/lib\/|\\lib\\/g, '\\');
+	path = path.replace(/\\lib\\/g, '\\');
+	return path.replace(/\/lib\//g, '/');
 }
 
 function mkdirp(path) {
@@ -34,7 +35,7 @@ function compileFile(fname) {
 	if (/\.json$/.test(srcPath)) {
 		transformed.code = source;
 	} else {
-		transformed = transformJs(srcPath, {sourceMaps:true, force:true});
+		transformed = transformJs(srcPath, { sourceMaps: true, force: true });
 		dstPath = dstPath.replace(/\.[^\.]+$/, '.js');
 	}
 	// do not compile js files, only maps are required for coverage
@@ -47,11 +48,11 @@ function compileFile(fname) {
 }
 
 function compileDir(dir, deep) {
-	fs.readdirSync(fsp.join(__dirname, dir)).forEach(function(sub) {
+	fs.readdirSync(fsp.join(__dirname, dir)).forEach(function (sub) {
 		var fname = fsp.join(dir, sub);
 		if (fs.lstatSync(fsp.join(__dirname, fname)).isDirectory()) {
 			compileDir(fname);
-		} else if (/\.(ts|js|_js|json)$/.test(sub) && !(/\.d\.ts$/.test(sub))){
+		} else if (/\.(ts|js|_js|json)$/.test(sub) && !(/\.d\.ts$/.test(sub))) {
 			if (deep !== 0) mkdirp(fsp.join(__dirname, target, dir));
 			compileFile(fname);
 		}
