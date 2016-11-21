@@ -9,6 +9,7 @@ const path = require('path');
 let trace;// = console.log;
 
 const port = 3001;
+const mongodbPort = process.env.SPIRIT_MONGODB_PORT || 27017;
 const baseUrl = 'http://localhost:' + port;
 
 const config = {
@@ -17,7 +18,7 @@ const config = {
         mongodb: {
             datasources: {
                 "mongodb": {
-                    uri: "mongodb://localhost:27032/spirit",
+                    uri: "mongodb://localhost:" + mongodbPort + "/spirit",
                     options: {}
                 }
             },
