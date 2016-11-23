@@ -6,8 +6,9 @@ import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';
 import { ModelController } from './modelController';
 import { ConnectionHelper } from './connectionHelper';
+import { helper as objectHelper } from 'spirit.io/lib/utils';
 
-import express = require ('express');
+import express = require('express');
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 const idValidator = require('mongoose-id-validator');
@@ -20,23 +21,40 @@ export class ModelFactory extends ModelFactoryBase implements IModelFactory {
     public schema: Schema;
     public model: Model<any>;
 
-    constructor(targetClass: any) {
-        super(targetClass);
+    constructor(name: string, targetClass: any) {
+        super(name, targetClass);
     }
 
-    setup (routers: Map<string, express.Router>) {
-        super.setup(routers, new ModelActions(this), new ModelHelper(this), new ModelController(this));
-        
+    createSchema(): any {
+        let schema = objectHelper.clone(this.$prototype);
+        Object.keys(this.$references).forEach((k) => {
+            if (schema[k].embedded) {
+                if (schema[k].ref === this.collectionName) {
+                    throw new Error(`Cyclic embedded reference not allowed: property '${k}' with type '${schema[k].ref}' can't be set on model of type '${this.collectionName}'`);
+                }
+                let mf = this.getModelFactoryByPath(k);
+                schema[k] = mf.createSchema();
+                if (this.$plurals.indexOf(k) !== -1) {
+                    schema[k] = [schema[k]];
+                }
+            }
+        });
+        return new Schema(schema, { _id: false, versionKey: false } as any);
+    }
+
+    setup(routers: Map<string, express.Router>) {
+        super.init(routers, new ModelActions(this), new ModelHelper(this), new ModelController(this));
+
         if (Object.keys(this.$prototype).length) {
             let db = ConnectionHelper.get(this.datasource || 'mongodb');
-            let schema = new Schema(this.$prototype, {_id: false, versionKey: false});
+            let schema: Schema = this.createSchema();
             schema.plugin(uniqueValidator);
-            schema.plugin(idValidator, {connection: db});
-            
+            schema.plugin(idValidator, { connection: db });
+
             this.model = db.model(this.collectionName, schema, this.collectionName);
 
         }
 
-        
-    } 
+
+    }
 }

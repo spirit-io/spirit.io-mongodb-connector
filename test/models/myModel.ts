@@ -1,4 +1,4 @@
-import { collection, unique, required, index, reverse } from 'spirit.io/lib/decorators';
+import { collection, unique, required, index, reverse, embedded } from 'spirit.io/lib/decorators';
 import { ModelBase } from 'spirit.io/lib/base';
 
 @collection({ datasource: 'mock:ds' })
@@ -35,6 +35,7 @@ export class MyModel extends ModelBase {
     aDate: Array<Date>;
     aBoolean: Array<boolean>;
 
+    @embedded
     rel: MyModelRel;
     rels: MyModelRel[];
 

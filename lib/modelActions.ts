@@ -3,7 +3,7 @@ import { IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 const mongoose = require('mongoose');
 
 function ensureId(item: any) {
@@ -16,11 +16,13 @@ export class ModelActions implements IModelActions {
 
     query(_: _, filter: Object = {}, options?: any) {
         options = options || {};
-        let fields = this.modelFactory.$fields.join(' ');
+        let fields = Array.from(this.modelFactory.$fields.keys()).join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
         if (options.includes) this.populateQuery(query, options.includes);
         let docs = (<any>query).exec(_);
-        return docs && docs.map(doc => { return doc.toObject() });
+        return docs && docs.map(doc => {
+            return doc.toObject()
+        });
     }
 
     read(_: _, id: any, options?: any) {
@@ -36,8 +38,8 @@ export class ModelActions implements IModelActions {
             if (options.ref) {
                 let refRes: any;
                 let refModelFactory = this.modelFactory.getModelFactoryByPath(options.ref);
-
-                if (this.modelFactory.$plurals.indexOf(options.ref) !== -1) {
+                let field = this.modelFactory.$fields.get(options.ref);
+                if (field.isPlural) {
                     let filter = { _id: { $in: res[options.ref] } };
                     return refModelFactory.actions.query(_, filter, { includes: options.includes });
                 } else {
@@ -56,43 +58,51 @@ export class ModelActions implements IModelActions {
     }
 
     update(_: _, _id: any, item: any, options?: any) {
-        options = options || {};
         if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
         item._updatedAt = new Date();
-
         let data: any = {};
         let reverseProperties: string[] = [];
         if (options.deleteMissing) {
             if (options.ref) {
                 let key = options.ref;
-                if (this.modelFactory.$fields.indexOf(key) !== -1 && item.hasOwnProperty(key)) {
-                    data.$set = data.$set || {};
-                    // TODO: body should not contains key... Maybe I got something with processReverse that I can't remember ?
-                    data.$set[key] = item[key];
+                let field = this.modelFactory.$fields.get(key);
+                if (field && item.hasOwnProperty(key)) {
+                    // read only properties MUST NOT be updated, but CAN be inserted at creation
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                        data.$set = data.$set || {};
+                        // TODO: body should not contains key... Maybe I got something with processReverse that I can't remember ?
+                        data.$set[key] = item[key];
+                    }
                 }
             } else {
-                for (let key of this.modelFactory.$fields) {
-                    if (!item.hasOwnProperty(key)) {
-                        if (key.indexOf('_') !== 0) {
-                            data.$unset = data.$unset || {};
-                            data.$unset[key] = 1;
+                for (let [key, field] of this.modelFactory.$fields) {
+                    // read only properties MUST NOT be updated, but CAN be inserted at creation
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                        if (!item.hasOwnProperty(key)) {
+                            if (!field.isReadOnly) {
+                                data.$unset = data.$unset || {};
+                                data.$unset[key] = 1;
+                            }
+                        } else {
+                            data.$set = data.$set || {};
+                            data.$set[key] = item[key];
                         }
-                    } else {
-                        data.$set = data.$set || {};
-                        data.$set[key] = item[key];
                     }
                 }
             }
         } else {
             // TODO : manage options.ref for PATCH operation.
-            for (let key of this.modelFactory.$fields) {
-                if (item.hasOwnProperty(key)) {
-                    if (this.modelFactory.$plurals.indexOf(key) !== -1) {
-                        data.$addToSet = data.$addToSet || {};
-                        data.$addToSet[key] = { $each: (Array.isArray(item[key]) ? item[key] : [item[key]]) };
-                    } else {
-                        data.$set = data.$set || {};
-                        data.$set[key] = item[key];
+            for (let [key, field] of this.modelFactory.$fields) {
+                if (item.hasOwnProperty(key) && item[key]) {
+                    // read only properties MUST NOT be updated, but CAN be inserted at creation
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                        if (field.isPlural) {
+                            data.$addToSet = data.$addToSet || {};
+                            data.$addToSet[key] = { $each: (Array.isArray(item[key]) ? item[key] : [item[key]]) };
+                        } else {
+                            data.$set = data.$set || {};
+                            data.$set[key] = item[key];
+                        }
                     }
                 }
             }
@@ -103,16 +113,17 @@ export class ModelActions implements IModelActions {
 
         let doc = (<Query<any>>query).exec(_);
         let res = doc && doc.toObject();
-
         this.processReverse(_, doc._id, res, options.ref);
         return res;
     }
 
     createOrUpdate(_: _, _id: any, item: any, options?: any) {
+        options = options || {};
         //console.log("Create or update document with values;", item);
         let doc = this.read(_, _id);
         if (doc) {
             // console.log(`update ${_id}`);
+            options.deleteReadOnly = true;
             return this.update(_, _id, item, options);
         } else {
             // console.log(`create ${_id}`);
@@ -127,20 +138,23 @@ export class ModelActions implements IModelActions {
     private processReverse(_: _, _id: string, item: any, subProperty?: string): void {
         for (let path in this.modelFactory.$references) {
             let refOpt = this.modelFactory.$references[path] || {};
-            if (refOpt.$reverse && item.hasOwnProperty(path)) {
+            let revKey = refOpt.$reverse;
+            if (revKey && item.hasOwnProperty(path)) {
                 let revModelFactory: IModelFactory = subProperty ? this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
+                let field = revModelFactory.$fields.get(path);
+                // Do not update read only property
+                if (field.isReadOnly) return;
 
-                let revIsPlural = revModelFactory.$plurals.indexOf(refOpt.$reverse) !== -1;
                 let refItem = {};
-                refItem[refOpt.$reverse] = revIsPlural ? [_id] : _id;
+                refItem[revKey] = field.isPlural ? [_id] : _id;
 
                 let update;
-                if (revIsPlural) {
+                if (field.isPlural) {
                     update = { $addToSet: {} };
-                    update.$addToSet[refOpt.$reverse] = { $each: [_id] };
+                    update.$addToSet[revKey] = { $each: [_id] };
                 } else {
                     update = { $set: {} };
-                    update.$set[refOpt.$reverse] = _id;
+                    update.$set[revKey] = _id;
                 }
 
                 let refIds: Array<string> = Array.isArray(item[path]) ? item[path] : [item[path]];
@@ -151,12 +165,12 @@ export class ModelActions implements IModelActions {
 
 
                 let update2;
-                if (revIsPlural) {
+                if (field.isPlural) {
                     update2 = { $pull: {} };
-                    update2.$pull[refOpt.$reverse] = { $in: [_id] };
+                    update2.$pull[revKey] = { $in: [_id] };
                 } else {
                     update2 = { $unset: {} };
-                    update2.$unset[refOpt.$reverse] = 1;
+                    update2.$unset[revKey] = 1;
                 }
                 //console.log("Update2: "+JSON.stringify({ _id: { $nin: refIds}})+":"+JSON.stringify(update2);
 
@@ -168,9 +182,12 @@ export class ModelActions implements IModelActions {
 
     private populateQuery(query: Query<any>, includes: any): void {
         for (let include of includes) {
-            include.model = this.modelFactory.getModelFactoryByPath(include.path).model;
-            // populate is done here !!!
-            query = query.populate(include);
+            // do not apply populate for embedded references
+            if (this.modelFactory.$prototype[include.path] && !this.modelFactory.$prototype[include.path].embedded) {
+                include.model = this.modelFactory.getModelFactoryByPath(include.path).model;
+                // populate is done here !!!
+                query = query.populate(include);
+            }
         }
     }
 }

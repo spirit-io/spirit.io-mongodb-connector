@@ -26,7 +26,7 @@ export class MongodbConnector implements IConnector {
         ConnectionHelper.connect(datasourceKey, parameters);
     }
 
-    createModelFactory(myClass: any): IModelFactory {
-        return new ModelFactory(myClass);
+    createModelFactory(name: string, myClass: any): IModelFactory {
+        return new ModelFactory(name, myClass);
     }
 }

@@ -19,7 +19,7 @@ function removaAllDocuments(_) {
     // delete all myModelRels
     let db = AdminHelper.model(MyModelRel);
     let rels = db.fetchInstances(_);
-    rels.forEach_(_, function (_, r) {
+    rels.forEach_(_, function(_, r) {
         db.deleteInstance(_, r);
     });
     rels = db.fetchInstances(_);
@@ -28,7 +28,7 @@ function removaAllDocuments(_) {
     // delete all myModels
     db = AdminHelper.model(MyModel);
     rels = db.fetchInstances(_);
-    rels.forEach_(_, function (_, r) {
+    rels.forEach_(_, function(_, r) {
         db.deleteInstance(_, r);
     });
     rels = db.fetchInstances(_);
@@ -37,28 +37,29 @@ function removaAllDocuments(_) {
 
 describe('Spirit.io ORM Framework Tests:', () => {
 
-    before(function (done) {
+    before(function(done) {
         this.timeout(10000);
-        Fixtures.setup(function (err, res) {
+        Fixtures.setup(function(err, res) {
             if (err) throw err;
             server = res;
         }, done);
     });
 
     it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function (_) {
+        Fixtures.execAsync(done, function(_) {
             removaAllDocuments(_);
         });
     });
 
     it('Instanciate class should work either with adminHelper or ModelBase methods', (done) => {
-        Fixtures.execAsync(done, function (_) {
+        Fixtures.execAsync(done, function(_) {
             // this test does not validate populate as it is not the purpose !
 
             // instanciate class with ModelBase's save method
             let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
             mRel1.save(_);
             expect(mRel1.p1).to.equal("prop1");
+
             let mRel2: MyModelRel = new MyModelRel({ p1: "prop2" });
             mRel2.save(_);
             expect(mRel2.p1).to.equal("prop2");
@@ -80,7 +81,8 @@ describe('Spirit.io ORM Framework Tests:', () => {
                 "aDate": [new Date(), new Date('234567')],
                 "aBoolean": [false, true, false],
                 "inv": mRel1,
-                "rels": [mRel2, mRel3]
+                "rels": [mRel2, mRel3],
+                "rel": mRel1
             };
             let db = AdminHelper.model(MyModel);
             let m1: MyModel = new MyModel();
@@ -99,17 +101,17 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(m1.aNumber).to.have.members([0, 1, 2]);
             expect(m1.aBoolean).to.have.members([false, true, false]);
             expect(m1.inv).to.be.a("object");
+            expect(m1.rel).to.be.a("object");
             expect(objectHelper.areEqual(m1.inv, mRel1)).to.be.true;
-
+            expect(objectHelper.areEqual(m1.rel, mRel1)).to.be.true;
             expect(objectHelper.areEqual(m1.rels[0], mRel2)).to.be.true;
             expect(objectHelper.areEqual(m1.rels[1], mRel3)).to.be.true;
-
         });
     });
 
 
     it('Fetch instances should allow to get relations', (done) => {
-        Fixtures.execAsync(done, function (_) {
+        Fixtures.execAsync(done, function(_) {
             let db = AdminHelper.model(MyModel);
             let rels: MyModel[] = db.fetchInstances(_);
             expect(rels.length).to.equal(1);
@@ -118,11 +120,12 @@ describe('Spirit.io ORM Framework Tests:', () => {
             expect(rels[0].rels.length).to.equal(2);
             expect(rels[0].rels[0].p1).to.equal('prop2');
             expect(rels[0].rels[1].p1).to.equal('prop3modified');
+            expect(rels[0].rel.p1).to.equal('prop1');
         });
     });
 
     it('Fetch instances should return correct results even after deleting some instances', (done) => {
-        Fixtures.execAsync(done, function (_) {
+        Fixtures.execAsync(done, function(_) {
             let db = AdminHelper.model(MyModelRel);
             let rels = db.fetchInstances(_);
             expect(rels.length).to.equal(3);
@@ -143,7 +146,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
     });
 
     it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function (_) {
+        Fixtures.execAsync(done, function(_) {
             removaAllDocuments(_);
         });
     });
