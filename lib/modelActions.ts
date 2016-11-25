@@ -1,8 +1,9 @@
 import { _ } from 'streamline-runtime';
-import { IModelActions, IModelFactory } from 'spirit.io/lib/interfaces';
+import { IModelActions } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
+import { IMongoModelFactory } from './modelFactory';
 const uuid = require('uuid');
 const mongoose = require('mongoose');
 
@@ -140,7 +141,7 @@ export class ModelActions implements IModelActions {
             let refOpt = this.modelFactory.$references[path] || {};
             let revKey = refOpt.$reverse;
             if (revKey && item.hasOwnProperty(path)) {
-                let revModelFactory: IModelFactory = subProperty ? this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
+                let revModelFactory: IMongoModelFactory = subProperty ? this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
                 let field = revModelFactory.$fields.get(path);
                 // Do not update read only property
                 if (field.isReadOnly) return;
