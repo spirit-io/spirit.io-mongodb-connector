@@ -19,7 +19,7 @@ function removaAllDocuments(_) {
     // delete all myModelRels
     let db = AdminHelper.model(MyModelRel);
     let rels = db.fetchInstances(_);
-    rels.forEach_(_, function(_, r) {
+    rels.forEach_(_, function (_, r) {
         db.deleteInstance(_, r);
     });
     rels = db.fetchInstances(_);
@@ -28,7 +28,7 @@ function removaAllDocuments(_) {
     // delete all myModels
     db = AdminHelper.model(MyModel);
     rels = db.fetchInstances(_);
-    rels.forEach_(_, function(_, r) {
+    rels.forEach_(_, function (_, r) {
         db.deleteInstance(_, r);
     });
     rels = db.fetchInstances(_);
@@ -37,22 +37,22 @@ function removaAllDocuments(_) {
 
 describe('Spirit.io ORM Framework Tests:', () => {
 
-    before(function(done) {
+    before(function (done) {
         this.timeout(10000);
-        Fixtures.setup(function(err, res) {
+        Fixtures.setup(function (err, res) {
             if (err) throw err;
             server = res;
         }, done);
     });
 
     it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             removaAllDocuments(_);
         });
     });
 
     it('Instanciate class should work either with adminHelper or ModelBase methods', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             // this test does not validate populate as it is not the purpose !
 
             // instanciate class with ModelBase's save method
@@ -88,7 +88,6 @@ describe('Spirit.io ORM Framework Tests:', () => {
             let m1: MyModel = new MyModel();
             db.updateValues(m1, null); // update with null data for test coverage
             db.saveInstance(_, m1, data);
-
             expect(m1.id).to.be.a("string");
             expect(m1.createdAt).to.be.a("Date");
             expect(m1.updatedAt).to.be.a("Date");
@@ -111,7 +110,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
 
 
     it('Fetch instances should allow to get relations', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let db = AdminHelper.model(MyModel);
             let rels: MyModel[] = db.fetchInstances(_);
             expect(rels.length).to.equal(1);
@@ -125,7 +124,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
     });
 
     it('Fetch instances should return correct results even after deleting some instances', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             let db = AdminHelper.model(MyModelRel);
             let rels = db.fetchInstances(_);
             expect(rels.length).to.equal(3);
@@ -146,7 +145,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
     });
 
     it('Delete instances should work as expected', (done) => {
-        Fixtures.execAsync(done, function(_) {
+        Fixtures.execAsync(done, function (_) {
             removaAllDocuments(_);
         });
     });

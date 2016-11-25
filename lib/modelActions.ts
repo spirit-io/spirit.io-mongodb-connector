@@ -27,7 +27,7 @@ export class ModelActions implements IModelActions {
 
     read(_: _, filter: any, options?: any) {
         options = options || {};
-        let query: Query<any> = typeof filter === 'string' ? this.modelFactory.model.findById(filter) : this.modelFactory.model.findOne(filter);
+        let query: Query<any> = !filter || typeof filter === 'string' ? this.modelFactory.model.findById(filter) : this.modelFactory.model.findOne(filter);
         if (options.includes) this.populateQuery(query, options.includes);
         let doc = (<any>query).exec(_);
         let res = doc && doc.toObject();
