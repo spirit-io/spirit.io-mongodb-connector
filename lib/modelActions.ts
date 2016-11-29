@@ -112,28 +112,14 @@ export class ModelActions implements IModelActions {
         let query: any = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, upsert: true, context: 'query' } as any);
         if (options.includes) this.populateQuery(query, options.includes);
 
-        let doc = (<Query<any>>query).exec(_);
+        let doc: any = (<Query<any>>query).exec(_ as any);
         let res = doc && doc.toObject();
         this.processReverse(_, doc._id, res, options.ref);
         return res;
     }
 
-    createOrUpdate(_: _, _id: any, item: any, options?: any) {
-        options = options || {};
-        //console.log("Create or update document with values;", item);
-        let doc = this.read(_, _id);
-        if (doc) {
-            // console.log(`update ${_id}`);
-            options.deleteReadOnly = true;
-            return this.update(_, _id, item, options);
-        } else {
-            // console.log(`create ${_id}`);
-            return this.create(_, item, options);
-        }
-    };
-
     delete(_: _, _id: any) {
-        return this.modelFactory.model.remove({ _id: _id }, _);
+        return this.modelFactory.model.remove({ _id: _id }, _ as any);
     }
 
     private processReverse(_: _, _id: string, item: any, subProperty?: string): void {
@@ -162,7 +148,7 @@ export class ModelActions implements IModelActions {
                 //console.log("Update: "+JSON.stringify({ _id: { $in: refIds}})+":"+JSON.stringify(update));
 
                 // update document still referenced
-                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds } }, update, { multi: true }, _);
+                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds } }, update, { multi: true }, _ as any);
 
 
                 let update2;
@@ -176,7 +162,7 @@ export class ModelActions implements IModelActions {
                 //console.log("Update2: "+JSON.stringify({ _id: { $nin: refIds}})+":"+JSON.stringify(update2);
 
                 // update documents not referenced anymore
-                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds } }, update2, { multi: true }, _);
+                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds } }, update2, { multi: true }, _ as any);
             }
         }
     }

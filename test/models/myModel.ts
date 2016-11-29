@@ -1,4 +1,4 @@
-import { collection, unique, required, index, reverse, embedded } from 'spirit.io/lib/decorators';
+import { collection, unique, required, index, reverse, embedded, hook } from 'spirit.io/lib/decorators';
 import { ModelBase } from 'spirit.io/lib/base';
 
 @collection({ datasource: 'mock:ds' })
@@ -54,5 +54,7 @@ export class MyModel extends ModelBase {
     static aService(_, params: any): any {
         return { c: (params.a + params.b).toFixed(2) };
     }
+
+
 }
 
