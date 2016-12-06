@@ -33,17 +33,23 @@ export class ModelFactory extends ModelFactoryBase implements IMongoModelFactory
     }
 
     createSchema(): any {
-        let schema = objectHelper.clone(this.$prototype);
+        let schema = objectHelper.clone(this.$prototype, true);
         Object.keys(this.$references).forEach((k) => {
-            if (schema[k].embedded) {
-                if (schema[k].ref === this.collectionName) {
-                    throw new Error(`Cyclic embedded reference not allowed: property '${k}' with type '${schema[k].ref}' can't be set on model of type '${this.collectionName}'`);
+            let mf: IMongoModelFactory = <IMongoModelFactory>this.getModelFactoryByPath(k);
+            if (mf.datasource === this.datasource) {
+                if (schema[k].embedded) {
+                    if (schema[k].ref === this.collectionName) {
+                        throw new Error(`Cyclic embedded reference not allowed: property '${k}' with type '${schema[k].ref}' can't be set on model of type '${this.collectionName}'`);
+                    }
+
+                    schema[k] = mf.createSchema();
+                    if (this.$plurals.indexOf(k) !== -1) {
+                        schema[k] = [schema[k]];
+                    }
                 }
-                let mf: IMongoModelFactory = <IMongoModelFactory>this.getModelFactoryByPath(k);
-                schema[k] = mf.createSchema();
-                if (this.$plurals.indexOf(k) !== -1) {
-                    schema[k] = [schema[k]];
-                }
+            } else {
+                schema[k].type = "string";
+                delete schema[k].ref;
             }
         });
         return new Schema(schema, { _id: false, versionKey: false } as any);

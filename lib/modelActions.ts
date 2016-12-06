@@ -1,5 +1,5 @@
 import { _ } from 'streamline-runtime';
-import { IModelActions } from 'spirit.io/lib/interfaces';
+import { IModelActions, IFetchParameters, IQueryParameters } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
@@ -19,17 +19,23 @@ export class ModelActions implements IModelActions {
         options = options || {};
         let fields = Array.from(this.modelFactory.$fields.keys()).join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
-        if (options.includes) this.populateQuery(query, options.includes);
+        let skippedPopulates = [];
+        if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
         let docs = (<any>query).exec(_);
-        return docs && docs.map(doc => {
-            return doc.toObject()
+        return docs && docs.map_(_, (_, doc) => {
+            let res = doc.toObject();
+            skippedPopulates.forEach_(_, (_, k) => {
+                this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+            });
+            return res;
         });
     }
 
     read(_: _, filter: any, options?: any) {
         options = options || {};
         let query: Query<any> = !filter || typeof filter === 'string' ? this.modelFactory.model.findById(filter) : this.modelFactory.model.findOne(filter);
-        if (options.includes) this.populateQuery(query, options.includes);
+        let skippedPopulates = [];
+        if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
         let doc = (<any>query).exec(_);
         let res = doc && doc.toObject();
 
@@ -47,6 +53,9 @@ export class ModelActions implements IModelActions {
                     return refModelFactory.actions.read(_, res[options.ref], { includes: options.includes });
                 }
             } else {
+                skippedPopulates.forEach_(_, (_, k) => {
+                    this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+                });
                 return res;
             }
         }
@@ -110,10 +119,14 @@ export class ModelActions implements IModelActions {
         }
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let query: any = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, upsert: true, context: 'query' } as any);
-        if (options.includes) this.populateQuery(query, options.includes);
+        let skippedPopulates = [];
+        if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
 
         let doc: any = (<Query<any>>query).exec(_ as any);
         let res = doc && doc.toObject();
+        skippedPopulates.forEach_(_, (_, k) => {
+            this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+        });
         this.processReverse(_, doc._id, res, options.ref);
         return res;
     }
@@ -167,14 +180,24 @@ export class ModelActions implements IModelActions {
         }
     }
 
-    private populateQuery(query: Query<any>, includes: any): void {
+    private populateQuery(query: Query<any>, includes: any): any[] {
+        let skippedPopulates = [];
         for (let include of includes) {
             // do not apply populate for embedded references
             if (this.modelFactory.$prototype[include.path] && !this.modelFactory.$prototype[include.path].embedded) {
-                include.model = this.modelFactory.getModelFactoryByPath(include.path).model;
-                // populate is done here !!!
-                query = query.populate(include);
+                let mf = this.modelFactory.getModelFactoryByPath(include.path);
+                // use mongoose populate for same datasource
+                if (mf.datasource === this.modelFactory.datasource) {
+                    include.model = mf.model;
+                    // populate is done here !!!
+                    query = query.populate(include);
+                }
+                // but use home made populate for distinct datasources
+                else {
+                    skippedPopulates.push(include.path);
+                }
             }
         }
+        return skippedPopulates;
     }
 }
