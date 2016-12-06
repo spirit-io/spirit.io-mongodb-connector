@@ -1,7 +1,7 @@
 import { collection, unique, required, index, reverse, embedded, hook } from 'spirit.io/lib/decorators';
 import { ModelBase } from 'spirit.io/lib/base';
 
-@collection({ datasource: 'mock:ds' })
+@collection()
 export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);

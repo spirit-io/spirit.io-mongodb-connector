@@ -33,7 +33,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
 
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: Invalid where filter: badJson`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: Invalid where filter: badJson`);
         });
     });
 
@@ -93,7 +93,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
             let resp = Fixtures.post(_, '/api/v1/myModelRel', { p1: "prop1", p2: "prop2" });
             let body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: Property 'p2' does not exist on model 'MyModelRel'`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: Property 'p2' does not exist on model 'MyModelRel'`);
         });
     });
 
@@ -263,7 +263,7 @@ describe('Spirit.io REST Express routes Tests:', () => {
             resp = Fixtures.get(_, '/api/v1/myModel?includes={wrong}}');
             body = JSON.parse(resp.body);
             expect(resp.status).to.equal(500);
-            expect(body.error).to.equal(`Error: JSON includes filter is not valid`);
+            expect(body.$diagnoses[0].$message).to.equal(`Error: JSON includes filter is not valid`);
         });
     });
 
@@ -316,33 +316,33 @@ describe('Spirit.io REST Express routes Tests:', () => {
     });
 
 
-    // it('query should return nothing after deleting all elements', (done) => {
-    //     Fixtures.execAsync(done, function (_) {
+    it('query should return nothing after deleting all elements', (done) => {
+        Fixtures.execAsync(done, function (_) {
 
-    //         myModelRels.forEach_(_, (_, r) => {
-    //             let resp = Fixtures.delete(_, '/api/v1/myModelRel/' + r);
-    //             expect(resp.status).to.equal(204);
-    //         });
+            myModelRels.forEach_(_, (_, r) => {
+                let resp = Fixtures.delete(_, '/api/v1/myModelRel/' + r);
+                expect(resp.status).to.equal(204);
+            });
 
 
-    //         let resp = Fixtures.get(_, '/api/v1/myModelRel');
-    //         let body = JSON.parse(resp.body);
-    //         expect(resp.status).to.equal(200);
-    //         expect(body).to.be.a('array');
-    //         expect(body.length).to.equal(0);
+            let resp = Fixtures.get(_, '/api/v1/myModelRel');
+            let body = JSON.parse(resp.body);
+            expect(resp.status).to.equal(200);
+            expect(body).to.be.a('array');
+            expect(body.length).to.equal(0);
 
-    //         myModel.forEach_(_, (_, m) => {
-    //             let resp = Fixtures.delete(_, '/api/v1/myModel/' + m);
-    //             expect(resp.status).to.equal(204);
-    //         });
+            myModel.forEach_(_, (_, m) => {
+                let resp = Fixtures.delete(_, '/api/v1/myModel/' + m);
+                expect(resp.status).to.equal(204);
+            });
 
-    //         resp = Fixtures.get(_, '/api/v1/myModel');
-    //         body = JSON.parse(resp.body);
-    //         expect(resp.status).to.equal(200);
-    //         expect(body).to.be.a('array');
-    //         expect(body.length).to.equal(0);
-    //     });
-    // });
+            resp = Fixtures.get(_, '/api/v1/myModel');
+            body = JSON.parse(resp.body);
+            expect(resp.status).to.equal(200);
+            expect(body).to.be.a('array');
+            expect(body.length).to.equal(0);
+        });
+    });
 
 
 
