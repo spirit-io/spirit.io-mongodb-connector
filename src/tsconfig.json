@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "es2015",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noEmitOnError": true,
+        "noImplicitAny": false,
+        "strictNullChecks": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "..",
+        "baseUrl": "..",
+        "paths": {
+            "spirit.io/lib/*": [
+                "node_modules/spirit.io/lib/*"
+            ]
+        }
+    },
+    "filesGlob": [
+        "./**/*.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

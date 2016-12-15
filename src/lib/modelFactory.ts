@@ -1,6 +1,5 @@
-import { _ } from 'streamline-runtime';
-import { ModelFactoryBase } from 'spirit.io/lib/base'
-import { IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces'
+import { ModelFactoryBase } from 'spirit.io/lib/base';
+import { IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces';
 import { Connection, Schema, Model, Query } from 'mongoose';
 import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';

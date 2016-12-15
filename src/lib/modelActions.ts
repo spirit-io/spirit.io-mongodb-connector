@@ -1,9 +1,9 @@
-import { _ } from 'streamline-runtime';
 import { IModelActions, IFetchParameters, IQueryParameters } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
 import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
 import { IMongoModelFactory } from './modelFactory';
+import { wait } from 'f-promise';
 const uuid = require('uuid');
 const mongoose = require('mongoose');
 
@@ -15,28 +15,28 @@ export class ModelActions implements IModelActions {
 
     constructor(private modelFactory: ModelFactory) { }
 
-    query(_: _, filter: Object = {}, options?: any) {
+    query(filter: Object = {}, options?: any) {
         options = options || {};
         let fields = Array.from(this.modelFactory.$fields.keys()).join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
         let skippedPopulates = [];
         if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
-        let docs = (<any>query).exec(_);
-        return docs && docs.map_(_, (_, doc) => {
+        let docs: any[] = wait(query.exec());
+        return docs && docs.map((doc) => {
             let res = doc.toObject();
-            skippedPopulates.forEach_(_, (_, k) => {
-                this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+            skippedPopulates.forEach((k) => {
+                this.modelFactory.populateField({ includes: options.includes }, res, k);
             });
             return res;
-        });
+        }) || [];
     }
 
-    read(_: _, filter: any, options?: any) {
+    read(filter: any, options?: any) {
         options = options || {};
         let query: Query<any> = !filter || typeof filter === 'string' ? this.modelFactory.model.findById(filter) : this.modelFactory.model.findOne(filter);
         let skippedPopulates = [];
         if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
-        let doc = (<any>query).exec(_);
+        let doc = wait(query.exec());
         let res = doc && doc.toObject();
 
         if (!res) {
@@ -48,26 +48,26 @@ export class ModelActions implements IModelActions {
                 let field = this.modelFactory.$fields.get(options.ref);
                 if (field.isPlural) {
                     let filter = { _id: { $in: res[options.ref] } };
-                    return refModelFactory.actions.query(_, filter, { includes: options.includes });
+                    return refModelFactory.actions.query(filter, { includes: options.includes });
                 } else {
-                    return refModelFactory.actions.read(_, res[options.ref], { includes: options.includes });
+                    return refModelFactory.actions.read(res[options.ref], { includes: options.includes });
                 }
             } else {
-                skippedPopulates.forEach_(_, (_, k) => {
-                    this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+                skippedPopulates.forEach((k) => {
+                    this.modelFactory.populateField({ includes: options.includes }, res, k);
                 });
                 return res;
             }
         }
     }
 
-    create(_: _, item: any, options?: any) {
+    create(item: any, options?: any) {
         ensureId(item);
         item._createdAt = new Date();
-        return this.update(_, item._id, item, options);
+        return this.update(item._id, item, options);
     }
 
-    update(_: _, _id: any, item: any, options?: any) {
+    update(_id: any, item: any, options?: any) {
         if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
         item._updatedAt = new Date();
         let data: any = {};
@@ -122,20 +122,20 @@ export class ModelActions implements IModelActions {
         let skippedPopulates = [];
         if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
 
-        let doc: any = (<Query<any>>query).exec(_ as any);
+        let doc: any = wait(query.exec());
         let res = doc && doc.toObject();
-        skippedPopulates.forEach_(_, (_, k) => {
-            this.modelFactory.populateField(_, { includes: options.includes }, res, k);
+        skippedPopulates.forEach((k) => {
+            this.modelFactory.populateField({ includes: options.includes }, res, k);
         });
-        this.processReverse(_, doc._id, res, options.ref);
+        this.processReverse(doc._id, res, options.ref);
         return res;
     }
 
-    delete(_: _, _id: any) {
-        return this.modelFactory.model.remove({ _id: _id }, _ as any);
+    delete(_id: any) {
+        return wait(<any>this.modelFactory.model.remove({ _id: _id }));
     }
 
-    private processReverse(_: _, _id: string, item: any, subProperty?: string): void {
+    private processReverse(_id: string, item: any, subProperty?: string): void {
         for (let path in this.modelFactory.$references) {
             let refOpt = this.modelFactory.$references[path] || {};
             let revKey = refOpt.$reverse;
@@ -161,7 +161,7 @@ export class ModelActions implements IModelActions {
                 //console.log("Update: "+JSON.stringify({ _id: { $in: refIds}})+":"+JSON.stringify(update));
 
                 // update document still referenced
-                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds } }, update, { multi: true }, _ as any);
+                (<Model<any>>revModelFactory.model).update({ _id: { $in: refIds } }, update, { multi: true });
 
 
                 let update2;
@@ -175,7 +175,7 @@ export class ModelActions implements IModelActions {
                 //console.log("Update2: "+JSON.stringify({ _id: { $nin: refIds}})+":"+JSON.stringify(update2);
 
                 // update documents not referenced anymore
-                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds } }, update2, { multi: true }, _ as any);
+                (<Model<any>>revModelFactory.model).update({ _id: { $nin: refIds } }, update2, { multi: true });
             }
         }
     }

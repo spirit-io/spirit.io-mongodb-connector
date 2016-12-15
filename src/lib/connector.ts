@@ -1,4 +1,4 @@
-import { IConnector, IModelFactory } from 'spirit.io/lib/interfaces'
+import { IConnector, IModelFactory } from 'spirit.io/lib/interfaces';
 import { ConnectionHelper } from './connectionHelper';
 import { ModelFactory } from './modelFactory';
 import { Connection } from 'mongoose';
@@ -7,6 +7,10 @@ const mongoose = require('mongoose');
 export class MongodbConnector implements IConnector {
     private _datasource: string = 'mongodb';
     private _config: any;
+
+    constructor(config: any) {
+        this._config = config;
+    }
 
     get datasource(): string {
         return this._datasource;
