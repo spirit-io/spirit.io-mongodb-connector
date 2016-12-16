@@ -10,13 +10,7 @@
         "emitDecoratorMetadata": true,
         "declaration": true,
         "sourceMap": true,
-        "outDir": "..",
-        "baseUrl": "..",
-        "paths": {
-            "spirit.io/lib/*": [
-                "node_modules/spirit.io/lib/*"
-            ]
-        }
+        "outDir": ".."
     },
     "filesGlob": [
         "./**/*.ts"
