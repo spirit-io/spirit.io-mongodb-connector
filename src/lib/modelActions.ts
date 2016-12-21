@@ -1,6 +1,5 @@
-import { IModelActions, IFetchParameters, IQueryParameters } from 'spirit.io/lib/interfaces';
+import { IModelActions, IParameters } from 'spirit.io/lib/interfaces';
 import { ModelRegistry } from 'spirit.io/lib/core';
-import { ModelFactory } from './modelFactory';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
 import { IMongoModelFactory } from './modelFactory';
 import { wait } from 'f-promise';
@@ -13,9 +12,9 @@ function ensureId(item: any) {
 
 export class ModelActions implements IModelActions {
 
-    constructor(private modelFactory: ModelFactory) { }
+    constructor(private modelFactory: IMongoModelFactory) { }
 
-    query(filter: Object = {}, options?: any) {
+    query(filter: Object = {}, options?: IParameters): any[] {
         options = options || {};
         let fields = Array.from(this.modelFactory.$fields.keys()).join(' ');
         let query: Query<any> = this.modelFactory.model.find(filter, fields);
@@ -31,7 +30,7 @@ export class ModelActions implements IModelActions {
         }) || [];
     }
 
-    read(filter: any, options?: any) {
+    read(filter: any, options?: IParameters): any {
         options = options || {};
         let query: Query<any> = !filter || typeof filter === 'string' ? this.modelFactory.model.findById(filter) : this.modelFactory.model.findOne(filter);
         let skippedPopulates = [];
@@ -61,13 +60,13 @@ export class ModelActions implements IModelActions {
         }
     }
 
-    create(item: any, options?: any) {
+    create(item: any, options?: IParameters): any {
         ensureId(item);
         item._createdAt = new Date();
         return this.update(item._id, item, options);
     }
 
-    update(_id: any, item: any, options?: any) {
+    update(_id: any, item: any, options?: IParameters): any {
         if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
         item._updatedAt = new Date();
         let data: any = {};
@@ -140,7 +139,7 @@ export class ModelActions implements IModelActions {
             let refOpt = this.modelFactory.$references[path] || {};
             let revKey = refOpt.$reverse;
             if (revKey && item.hasOwnProperty(path)) {
-                let revModelFactory: IMongoModelFactory = subProperty ? this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
+                let revModelFactory: IMongoModelFactory = subProperty ? <IMongoModelFactory>this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
                 let field = revModelFactory.$fields.get(path);
                 // Do not update read only property
                 if (field.isReadOnly) return;
@@ -185,7 +184,7 @@ export class ModelActions implements IModelActions {
         for (let include of includes) {
             // do not apply populate for embedded references
             if (this.modelFactory.$prototype[include.path] && !this.modelFactory.$prototype[include.path].embedded) {
-                let mf = this.modelFactory.getModelFactoryByPath(include.path);
+                let mf = <IMongoModelFactory>this.modelFactory.getModelFactoryByPath(include.path);
                 // use mongoose populate for same datasource
                 if (mf.datasource === this.modelFactory.datasource) {
                     include.model = mf.model;

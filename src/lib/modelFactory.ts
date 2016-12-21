@@ -16,7 +16,6 @@ let trace;// = console.log;
 
 export interface IMongoModelFactory extends IModelFactory {
     createSchema(): any;
-    getModelFactoryByPath(path: string): IMongoModelFactory;
     model: Model<any>;
 }
 
