@@ -3,8 +3,8 @@ import { ModelRegistry } from 'spirit.io/lib/core';
 import { Schema, Model, Query, MongooseDocument } from 'mongoose';
 import { IMongoModelFactory } from './modelFactory';
 import { wait } from 'f-promise';
-const uuid = require('uuid');
-const mongoose = require('mongoose');
+import * as uuid from 'uuid';
+import * as mongoose from 'mongoose';
 
 function ensureId(item: any) {
     item._id = item._id || uuid.v4();

@@ -1,16 +1,15 @@
 import { ModelFactoryBase } from 'spirit.io/lib/base';
-import { IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces';
+import { IConnector, IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces';
 import { Connection, Schema, Model, Query } from 'mongoose';
 import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';
 import { ModelController } from './modelController';
-import { ConnectionHelper } from './connectionHelper';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
 
-import express = require('express');
-const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
-const idValidator = require('mongoose-id-validator');
+import * as express from 'express';
+import * as mongoose from 'mongoose';
+import * as uniqueValidator from 'mongoose-unique-validator';
+import * as idValidator from 'mongoose-id-validator';
 
 let trace;// = console.log;
 
@@ -22,12 +21,12 @@ export interface IMongoModelFactory extends IModelFactory {
 
 export class ModelFactory extends ModelFactoryBase implements IMongoModelFactory {
 
-
+    public db: Connection;
     public schema: Schema;
     public model: Model<any>;
 
-    constructor(name: string, targetClass: any) {
-        super(name, targetClass);
+    constructor(name: string, targetClass: any, connector: IConnector) {
+        super(name, targetClass, connector);
     }
 
     createSchema(): any {
@@ -57,12 +56,12 @@ export class ModelFactory extends ModelFactoryBase implements IMongoModelFactory
         super.init(routers, new ModelActions(this), new ModelHelper(this), new ModelController(this));
 
         if (Object.keys(this.$prototype).length) {
-            let db = ConnectionHelper.get(this.datasource || 'mongodb');
+            this.db = this.connector.getConnection(this.datasource || 'mongodb');
             let schema: Schema = this.createSchema();
             schema.plugin(uniqueValidator);
-            schema.plugin(idValidator, { connection: db });
+            schema.plugin(idValidator, { connection: this.db });
 
-            this.model = db.model(this.collectionName, schema, this.collectionName);
+            this.model = this.db.model(this.collectionName, schema, this.collectionName);
 
         }
 
