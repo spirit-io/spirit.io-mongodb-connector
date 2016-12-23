@@ -4,8 +4,8 @@ import { MyModel, MyModelRel } from './models/myModel';
 import { AdminHelper } from 'spirit.io/lib/core';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
 import { setup } from 'f-mocha';
-
-const expect = require('chai').expect;
+import * as chai from 'chai';
+const expect = chai.expect;
 
 // this call activates f-mocha wrapper.
 setup();
