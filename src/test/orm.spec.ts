@@ -1,8 +1,7 @@
 import { Fixtures } from './fixtures';
 import { Server } from 'spirit.io/lib/application';
 import { MyModel, MyModelRel } from './models/myModel';
-import { ModelRegistry, AdminHelper } from 'spirit.io/lib/core';
-import { IModelFactory } from 'spirit.io/lib/interfaces';
+import { AdminHelper } from 'spirit.io/lib/core';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
 import { setup } from 'f-mocha';
 
@@ -11,13 +10,7 @@ const expect = require('chai').expect;
 // this call activates f-mocha wrapper.
 setup();
 
-let trace = console.log;
 let server: Server;
-
-let myModelMeta = {
-    $properties: ['_id', '_createdAt', '_updatedAt', 'pString', 'pNumber', 'pDate', 'pBoolean', 'aString', 'aNumber', 'aDate', 'aBoolean', 'inv', 'invs', 'rel', 'rels'],
-    $plurals: ['aString', 'aNumber', 'aDate', 'aBoolean', 'invs', 'rels']
-};
 
 function removaAllDocuments() {
     // delete all myModelRels

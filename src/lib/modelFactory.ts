@@ -1,17 +1,13 @@
 import { ModelFactoryBase } from 'spirit.io/lib/base';
-import { IConnector, IModelFactory, IModelActions, IModelHelper, IModelController } from 'spirit.io/lib/interfaces';
-import { Connection, Schema, Model, Query } from 'mongoose';
+import { IConnector, IModelFactory } from 'spirit.io/lib/interfaces';
+import { Connection, Schema, Model } from 'mongoose';
 import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';
 import { ModelController } from './modelController';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
-
 import * as express from 'express';
-import * as mongoose from 'mongoose';
 import * as uniqueValidator from 'mongoose-unique-validator';
 import * as idValidator from 'mongoose-id-validator';
-
-let trace;// = console.log;
 
 export interface IMongoModelFactory extends IModelFactory {
     createSchema(): any;

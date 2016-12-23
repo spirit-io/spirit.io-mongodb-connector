@@ -1,10 +1,8 @@
 import { IModelActions, IParameters } from 'spirit.io/lib/interfaces';
-import { ModelRegistry } from 'spirit.io/lib/core';
-import { Schema, Model, Query, MongooseDocument } from 'mongoose';
+import { Model, Query } from 'mongoose';
 import { IMongoModelFactory } from './modelFactory';
 import { wait } from 'f-promise';
 import * as uuid from 'uuid';
-import * as mongoose from 'mongoose';
 
 function ensureId(item: any) {
     item._id = item._id || uuid.v4();
@@ -42,7 +40,6 @@ export class ModelActions implements IModelActions {
             return null;
         } else {
             if (options.ref) {
-                let refRes: any;
                 let refModelFactory = this.modelFactory.getModelFactoryByPath(options.ref);
                 let field = this.modelFactory.$fields.get(options.ref);
                 if (field.isPlural) {
@@ -70,7 +67,6 @@ export class ModelActions implements IModelActions {
         if (item.hasOwnProperty('_id')) delete item._id; // TODO: clean data _created, _updated...
         item._updatedAt = new Date();
         let data: any = {};
-        let reverseProperties: string[] = [];
         if (options.deleteMissing) {
             if (options.ref) {
                 let key = options.ref;
