@@ -2,7 +2,8 @@ import { Fixtures } from './fixtures';
 import { Server } from 'spirit.io/lib/application';
 import { helper as objectHelper } from 'spirit.io/';
 import { setup } from 'f-mocha';
-const expect = require('chai').expect;
+import * as chai from 'chai';
+const expect = chai.expect;
 
 // this call activates f-mocha wrapper.
 setup();
