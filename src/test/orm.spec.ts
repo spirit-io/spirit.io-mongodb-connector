@@ -39,10 +39,6 @@ describe('Spirit.io ORM Framework Tests:', () => {
         server = Fixtures.setup(done);
     });
 
-    it('Delete instances should work as expected', () => {
-        removaAllDocuments();
-    });
-
     it('Instanciate class should work either with adminHelper or ModelBase methods', () => {
         // this test does not validate populate as it is not the purpose !
 

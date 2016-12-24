@@ -43,6 +43,10 @@ export class MongodbConnector implements IConnector {
         return c;
     }
 
+    cleanDb(ds: string): void {
+        this.getConnection(ds).dropDatabase();
+    }
+
     createModelFactory(name: string, myClass: any): IModelFactory {
         return new ModelFactory(name, myClass, this);
     }
