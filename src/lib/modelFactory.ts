@@ -5,7 +5,6 @@ import { ModelActions } from './modelActions';
 import { ModelHelper } from './modelHelper';
 import { ModelController } from './modelController';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
-import * as express from 'express';
 import * as uniqueValidator from 'mongoose-unique-validator';
 import * as idValidator from 'mongoose-id-validator';
 
@@ -48,8 +47,8 @@ export class ModelFactory extends ModelFactoryBase implements IMongoModelFactory
         return new Schema(schema, { _id: false, versionKey: false } as any);
     }
 
-    setup(routers: Map<string, express.Router>) {
-        super.init(routers, new ModelActions(this), new ModelHelper(this), new ModelController(this));
+    setup() {
+        super.init(new ModelActions(this), new ModelHelper(this), new ModelController(this));
 
         if (Object.keys(this.$prototype).length) {
             this.db = this.connector.getConnection(this.datasource || 'mongodb');
