@@ -41,7 +41,7 @@ describe('Spirit.io ORM Framework Tests:', () => {
 
     it('Instanciate class should work either with adminHelper or ModelBase methods', () => {
         // this test does not validate populate as it is not the purpose !
-
+        console.log("BEGIN TEST");
         // instanciate class with ModelBase's save method
         let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
         mRel1.save();

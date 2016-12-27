@@ -27,7 +27,8 @@ export class MongodbConnector implements IConnector {
         return this._config;
     }
 
-    connect(datasourceKey: string, parameters: any): any {
+    connect(datasourceKey: string): any {
+        let parameters = this.config.datasources[datasourceKey];
         let opts = parameters.options;
         let db: Connection = mongoose.createConnection(parameters.uri, opts);
         db.once("open", () => {
@@ -39,7 +40,7 @@ export class MongodbConnector implements IConnector {
 
     getConnection(datasourceKey: string): Connection {
         let c = this.connections.get(datasourceKey);
-        if (!c) throw new Error(`Datasource '${datasourceKey}' not registered for mongodb connector. At least one datasource must be defined in your configuration file.`);
+        if (!c) throw new Error(`Connection for '${datasourceKey}' datasource not registered for mongodb connector. At least one datasource must be defined in your configuration file. Please check 'connect' function has been called or 'autoConnect' flag is set to 'true' in the datasource configuration`);
         return c;
     }
 
