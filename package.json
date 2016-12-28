@@ -16,7 +16,7 @@
     "f-promise": "^1.0.4",
     "mongoose": "^4.7.5",
     "mongoose-id-validator": "^0.3.0",
-    "mongoose-unique-validator": "git://github.com/tchambard/mongoose-unique-validator.git",
+    "mongoose-unique-validator": "git://github.com/blakehaswell/mongoose-unique-validator.git",
     "spirit.io": "^1.0.6",
     "uuid": "^3.0.0"
   },
