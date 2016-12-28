@@ -2,6 +2,7 @@ import { IModelActions, IParameters } from 'spirit.io/lib/interfaces';
 import { Model, Query } from 'mongoose';
 import { IMongoModelFactory } from './modelFactory';
 import { wait } from 'f-promise';
+import { helper as objectHelper } from 'spirit.io/lib/utils';
 import * as uuid from 'uuid';
 
 function ensureId(item: any) {
@@ -114,10 +115,27 @@ export class ModelActions implements IModelActions {
         }
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let query: any = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, upsert: true, context: 'query' } as any);
+
         let skippedPopulates = [];
         if (options.includes) skippedPopulates = this.populateQuery(query, options.includes);
 
-        let doc: any = wait(query.exec());
+        let doc: any;
+        try {
+            doc = wait(query.exec());
+        } catch (e) {
+            if (e.errors) {
+                let diags = [];
+                objectHelper.forEachKey(e.errors, (key, value) => {
+                    diags.push({
+                        $severity: 'error',
+                        $message: value.name + ': ' + value.message,
+                        $stackTrace: value.stack
+                    });
+                });
+                if (diags.length) e.$diagnoses = diags;
+            }
+            throw e;
+        }
         let res = doc && doc.toObject();
         skippedPopulates.forEach((k) => {
             this.modelFactory.populateField({ includes: options.includes }, res, k);

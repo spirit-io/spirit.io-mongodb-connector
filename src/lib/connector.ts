@@ -1,6 +1,7 @@
 import { IConnector, IModelFactory } from 'spirit.io/lib/interfaces';
 import { ModelFactory } from './modelFactory';
 import { Connection } from 'mongoose';
+import { wait } from 'f-promise';
 import * as mongoose from 'mongoose';
 (<any>mongoose).Promise = global.Promise;
 
@@ -45,7 +46,7 @@ export class MongodbConnector implements IConnector {
     }
 
     cleanDb(ds: string): void {
-        this.getConnection(ds).dropDatabase();
+        wait(this.getConnection(ds).dropDatabase());
     }
 
     createModelFactory(name: string, myClass: any): IModelFactory {

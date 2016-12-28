@@ -1,7 +1,8 @@
 import { Fixtures } from './fixtures';
 import { Server } from 'spirit.io/lib/application';
+import { IModelFactory } from 'spirit.io/lib/interfaces';
 import { MyModel, MyModelRel } from './models/myModel';
-import { AdminHelper } from 'spirit.io/lib/core';
+import { AdminHelper, Registry } from 'spirit.io/lib/core';
 import { helper as objectHelper } from 'spirit.io/lib/utils';
 import { setup } from 'f-mocha';
 import * as chai from 'chai';
@@ -39,18 +40,23 @@ describe('Spirit.io ORM Framework Tests:', () => {
         server = Fixtures.setup(done);
     });
 
+    it('Prototype should contains special mongoose schema metadata', () => {
+        let myModelFactory: IModelFactory = Registry.getFactory(MyModel);
+        expect(myModelFactory.$prototype.pNumber.unique).to.be.true;
+        expect(myModelFactory.$prototype.pDate.index).to.be.true;
+    });
+
     it('Instanciate class should work either with adminHelper or ModelBase methods', () => {
         // this test does not validate populate as it is not the purpose !
-        console.log("BEGIN TEST");
         // instanciate class with ModelBase's save method
-        let mRel1: MyModelRel = new MyModelRel({ p1: "prop1" });
+        let mRel1: MyModelRel = new MyModelRel({ p1: "prop1", p2: "prop11" });
         mRel1.save();
         expect(mRel1.p1).to.equal("prop1");
 
-        let mRel2: MyModelRel = new MyModelRel({ p1: "prop2" });
+        let mRel2: MyModelRel = new MyModelRel({ p1: "prop2", p2: "prop22" });
         mRel2.save();
         expect(mRel2.p1).to.equal("prop2");
-        let mRel3: MyModelRel = new MyModelRel({ p1: "prop3" });
+        let mRel3: MyModelRel = new MyModelRel({ p1: "prop3", p2: "prop33" });
         mRel3 = mRel3.save();
         expect(mRel3.p1).to.equal("prop3");
 
@@ -92,6 +98,49 @@ describe('Spirit.io ORM Framework Tests:', () => {
         expect(objectHelper.areEqual(m1.rel.serialize(), mRel1.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
+    });
+
+    it('Required validator should reject create operation with missing property value', () => {
+        let mRel1: MyModelRel;
+        let e;
+        try {
+            mRel1 = new MyModelRel({ p2: 'prop' });
+            mRel1.save();
+        } catch (err) {
+            e = err;
+        } finally {
+            expect(e).to.be.not.undefined;
+            expect(e.$diagnoses).to.be.not.null;
+            expect(e.$diagnoses.length).to.be.equal(1);
+            expect(e.$diagnoses[0].$severity).to.be.equal('error');
+            expect(e.$diagnoses[0].$message).to.be.equal('ValidatorError: Path `p1` is required.');
+            expect(e.$diagnoses[0].$stackTrace).to.be.not.null;
+        }
+    });
+
+    it('Unique validator should reject create operation with already existing properties value', () => {
+        let mRel1: MyModelRel;
+        let e;
+        // use array for expected verification as the order could vary
+        let expectedMessages = [
+            'ValidatorError: Error, expected `p1` to be unique. Value: `prop1`',
+            'ValidatorError: Error, expected `p2` to be unique. Value: `prop11`'
+        ]
+        try {
+            mRel1 = new MyModelRel({ p1: "prop1", p2: 'prop11' });
+            mRel1.save();
+        } catch (err) {
+            e = err;
+        } finally {
+            expect(e.$diagnoses).to.be.not.null;
+            expect(e.$diagnoses.length).to.be.equal(2);
+            expect(e.$diagnoses[0].$severity).to.be.equal('error');
+            expect(expectedMessages.indexOf(e.$diagnoses[0].$message) !== -1).to.be.true;
+            expect(e.$diagnoses[0].$stackTrace).to.be.not.null;
+            expect(e.$diagnoses[1].$severity).to.be.equal('error');
+            expect(expectedMessages.indexOf(e.$diagnoses[1].$message) !== -1).to.be.true;
+            expect(e.$diagnoses[1].$stackTrace).to.be.not.null;
+        }
     });
 
 

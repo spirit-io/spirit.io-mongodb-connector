@@ -2,8 +2,8 @@
   "name": "spirit.io-mongodb-connector",
   "version": "1.0.7",
   "description": "Typescript mongodb connector for spirit.io framework",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "index.js",
+  "typings": "index.d.ts",
   "scripts": {
     "prepublish": "rm -rf lib && rm -Rf test && tsc -p src",
     "test": "tsc -p src && node ./node_modules/nyc/bin/nyc ./node_modules/mocha/bin/_mocha --opts mocha.opts",
@@ -16,7 +16,7 @@
     "f-promise": "^1.0.4",
     "mongoose": "^4.7.5",
     "mongoose-id-validator": "^0.3.0",
-    "mongoose-unique-validator": "^1.0.2",
+    "mongoose-unique-validator": "git://github.com/tchambard/mongoose-unique-validator.git",
     "spirit.io": "^1.0.6",
     "uuid": "^3.0.0"
   },

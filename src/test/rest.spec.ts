@@ -67,10 +67,10 @@ describe('Spirit.io REST Express routes Tests:', () => {
 	});
 
 	it('not expected property should raise an error on creation', () => {
-		let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", p2: "prop2" });
+		let resp = Fixtures.post('/api/v1/myModelRel', { p1: "prop1", p3: "notexpected" });
 		let body = JSON.parse(resp.body);
 		expect(resp.status).to.equal(500);
-		expect(body.$diagnoses[0].$message).to.equal(`Property 'p2' does not exist on model 'MyModelRel'`);
+		expect(body.$diagnoses[0].$message).to.equal(`Property 'p3' does not exist on model 'MyModelRel'`);
 	});
 
 

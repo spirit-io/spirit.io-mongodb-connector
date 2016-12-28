@@ -1,4 +1,5 @@
-import { model, unique, required, index, reverse, embedded } from 'spirit.io/lib/decorators';
+import { model, required, reverse, embedded } from 'spirit.io/lib/decorators';
+import { unique, index } from '../../lib/decorators';
 import { ModelBase } from 'spirit.io/lib/base';
 
 @model()
@@ -6,7 +7,11 @@ export class MyModelRel extends ModelBase {
     constructor(data) {
         super(data);
     }
+    @unique
+    @required
     p1: string
+    @unique
+    p2: string
     relinv: MyModel;
     relinvs: MyModel[]
 }
