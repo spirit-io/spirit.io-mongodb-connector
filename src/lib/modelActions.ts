@@ -99,7 +99,7 @@ export class ModelActions implements IModelActions {
         } else {
             // TODO : manage options.ref for PATCH operation.
             for (let [key, field] of this.modelFactory.$fields) {
-                if (item.hasOwnProperty(key) && item[key]) {
+                if (item.hasOwnProperty(key) && item[key] !== undefined) {
                     // read only properties MUST NOT be updated, but CAN be inserted at creation
                     if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
                         if (field.isPlural) {
@@ -113,6 +113,7 @@ export class ModelActions implements IModelActions {
                 }
             }
         }
+        //console.log("DATA:", data)
         /* context is not declare in .d.ts file but it is mandatory to have unique validator working !!! */
         let query: any = this.modelFactory.model.findOneAndUpdate({ _id: _id }, data, { runValidators: true, new: true, upsert: true, context: 'query' } as any);
 
@@ -129,7 +130,7 @@ export class ModelActions implements IModelActions {
                     diags.push({
                         $severity: 'error',
                         $message: value.name + ': ' + value.message,
-                        $stackTrace: value.stack
+                        $stack: value.stack
                     });
                 });
                 if (diags.length) e.$diagnoses = diags;

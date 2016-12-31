@@ -8,7 +8,7 @@ import * as helpers from 'spirit.io/lib/decorators/helpers';
  * @param string The name of the property.
  */
 export function unique(target: any, propertyKey: string) {
-    helpers.addMetadata(target.constructor, propertyKey, { unique: true });
+    helpers.addMetadata(target.constructor, propertyKey, { unique: true, sparse: true });
 }
 
 /**

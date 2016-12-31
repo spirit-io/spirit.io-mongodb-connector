@@ -33,7 +33,7 @@ function removaAllDocuments() {
     expect(rels.length).to.equal(0);
 }
 
-describe('Spirit.io ORM Framework Tests:', () => {
+describe('MongoDB connector ORM Framework Tests:', () => {
 
     before(function (done) {
         this.timeout(10000);
@@ -99,50 +99,6 @@ describe('Spirit.io ORM Framework Tests:', () => {
         expect(objectHelper.areEqual(m1.rels[0].serialize(), mRel2.serialize())).to.be.true;
         expect(objectHelper.areEqual(m1.rels[1].serialize(), mRel3.serialize())).to.be.true;
     });
-
-    it('Required validator should reject create operation with missing property value', () => {
-        let mRel1: MyModelRel;
-        let e;
-        try {
-            mRel1 = new MyModelRel({ p2: 'prop' });
-            mRel1.save();
-        } catch (err) {
-            e = err;
-        } finally {
-            expect(e).to.be.not.undefined;
-            expect(e.$diagnoses).to.be.not.null;
-            expect(e.$diagnoses.length).to.be.equal(1);
-            expect(e.$diagnoses[0].$severity).to.be.equal('error');
-            expect(e.$diagnoses[0].$message).to.be.equal('ValidatorError: Path `p1` is required.');
-            expect(e.$diagnoses[0].$stackTrace).to.be.not.null;
-        }
-    });
-
-    it('Unique validator should reject create operation with already existing properties value', () => {
-        let mRel1: MyModelRel;
-        let e;
-        // use array for expected verification as the order could vary
-        let expectedMessages = [
-            'ValidatorError: Error, expected `p1` to be unique. Value: `prop1`',
-            'ValidatorError: Error, expected `p2` to be unique. Value: `prop11`'
-        ]
-        try {
-            mRel1 = new MyModelRel({ p1: "prop1", p2: 'prop11' });
-            mRel1.save();
-        } catch (err) {
-            e = err;
-        } finally {
-            expect(e.$diagnoses).to.be.not.null;
-            expect(e.$diagnoses.length).to.be.equal(2);
-            expect(e.$diagnoses[0].$severity).to.be.equal('error');
-            expect(expectedMessages.indexOf(e.$diagnoses[0].$message) !== -1).to.be.true;
-            expect(e.$diagnoses[0].$stackTrace).to.be.not.null;
-            expect(e.$diagnoses[1].$severity).to.be.equal('error');
-            expect(expectedMessages.indexOf(e.$diagnoses[1].$message) !== -1).to.be.true;
-            expect(e.$diagnoses[1].$stackTrace).to.be.not.null;
-        }
-    });
-
 
     it('Fetch instances should allow to get relations', () => {
         let db = AdminHelper.model(MyModel);

@@ -1,8 +1,9 @@
 import { Server } from 'spirit.io/lib/application';
-import { ConnectorHelper } from 'spirit.io/lib/core';
+import { ConnectorHelper, Registry } from 'spirit.io/lib/core';
 import { MongodbConnector } from '../../lib/connector';
 import { context, run } from 'f-promise';
 import { Fixtures as GlobalFixtures } from 'spirit.io/test/fixtures';
+import { IMongoModelFactory } from '../../lib/modelFactory';
 import * as path from 'path';
 
 const port = 3001;
@@ -20,7 +21,7 @@ const config = {
                 }
             },
             mongoose: {
-                debug: false
+                debug: true
             }
         }
     }
@@ -34,6 +35,11 @@ export class Fixtures extends GlobalFixtures {
             // delete the whole database
             let mConnector: MongodbConnector = <MongodbConnector>ConnectorHelper.getConnector('mongodb');
             Fixtures.cleanDatabases([mConnector]);
+
+            // call ensure index as drop database remove all indexes
+            Registry.factories.forEach((f: IMongoModelFactory) => {
+                f.model.ensureIndexes();
+            });
         }
         let connector;
         if (!context().__server) {

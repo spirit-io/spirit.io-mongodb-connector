@@ -10,7 +10,7 @@ setup();
 
 let server: Server;
 
-describe('Spirit.io REST Express routes Tests:', () => {
+describe('MongoDB connector REST Express routes Tests:', () => {
 	before(function (done) {
 		this.timeout(10000);
 		server = Fixtures.setup(done);
@@ -48,9 +48,9 @@ describe('Spirit.io REST Express routes Tests:', () => {
 		expect(new Date(body._updated)).to.be.a("Date");
 
 		// create 3 more
-		Fixtures.post('/api/v1/myModelRel', { p1: "prop2" });
-		Fixtures.post('/api/v1/myModelRel', { p1: "prop3" });
-		Fixtures.post('/api/v1/myModelRel', { p1: "prop4" });
+		expect(Fixtures.post('/api/v1/myModelRel', { p1: "prop2" }).status).to.equal(201);
+		expect(Fixtures.post('/api/v1/myModelRel', { p1: "prop3" }).status).to.equal(201);
+		expect(Fixtures.post('/api/v1/myModelRel', { p1: "prop4" }).status).to.equal(201);
 	});
 
 	let myModelRels = [];

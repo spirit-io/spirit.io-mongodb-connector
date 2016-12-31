@@ -1,4 +1,4 @@
-import { IConnector, IModelFactory } from 'spirit.io/lib/interfaces';
+import { IConnector, IModelFactory, IValidator } from 'spirit.io/lib/interfaces';
 import { ModelFactory } from './modelFactory';
 import { Connection } from 'mongoose';
 import { wait } from 'f-promise';
@@ -8,7 +8,9 @@ import * as mongoose from 'mongoose';
 export class MongodbConnector implements IConnector {
     private _datasource: string = 'mongodb';
     private _config: any;
+    public ignoreValidators: string[] = ['required', 'unique', 'index'];
     public connections = new Map<string, Connection>();
+    public validators: Map<string, IValidator> = new Map();
 
     constructor(config: any) {
         this._config = config;
@@ -51,5 +53,13 @@ export class MongodbConnector implements IConnector {
 
     createModelFactory(name: string, myClass: any): IModelFactory {
         return new ModelFactory(name, myClass, this);
+    }
+
+    registerValidator(validator: IValidator) {
+        this.validators.set(validator.name, validator);
+    }
+
+    getValidator(key: string): IValidator {
+        return this.validators.get(key);
     }
 }
