@@ -8,7 +8,7 @@ import * as mongoose from 'mongoose';
 export class MongodbConnector implements IConnector {
     private _datasource: string = 'mongodb';
     private _config: any;
-    public ignoreValidators: string[] = ['required', 'unique', 'index'];
+    public ignoreValidators: string[] = ['required', 'unique', 'index', 'sparse'];
     public connections = new Map<string, Connection>();
     public validators: Map<string, IValidator> = new Map();
 

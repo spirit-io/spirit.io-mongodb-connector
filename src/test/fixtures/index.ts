@@ -16,12 +16,11 @@ const config = {
             datasources: {
                 "mongodb": {
                     uri: "mongodb://localhost:" + mongodbPort + "/spirit",
-                    options: {},
-                    autoConnect: true
+                    options: {}
                 }
             },
             mongoose: {
-                debug: true
+                debug: false
             }
         }
     }
@@ -68,6 +67,9 @@ export class Fixtures extends GlobalFixtures {
             run(() => {
                 console.log("\n========== Initialize server begins ============");
                 connector = new MongodbConnector(config.connectors.mongodb);
+                // change config manually for coverage :)
+                config.connectors.mongodb.datasources.mongodb['autoConnect'] = true;
+                connector.config = config.connectors.mongodb;
                 server.addConnector(connector);
                 console.log("Connector config: " + JSON.stringify(connector.config, null, 2));
 

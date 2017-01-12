@@ -73,8 +73,8 @@ export class ModelActions implements IModelActions {
                 let key = options.ref;
                 let field = this.modelFactory.$fields.get(key);
                 if (field && item.hasOwnProperty(key)) {
-                    // read only properties MUST NOT be updated, but CAN be inserted at creation
-                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                    // insert only properties MUST NOT be updated, but CAN be inserted at creation
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isInsertOnly)) {
                         data.$set = data.$set || {};
                         // TODO: body should not contains key... Maybe I got something with processReverse that I can't remember ?
                         data.$set[key] = item[key];
@@ -83,9 +83,9 @@ export class ModelActions implements IModelActions {
             } else {
                 for (let [key, field] of this.modelFactory.$fields) {
                     // read only properties MUST NOT be updated, but CAN be inserted at creation
-                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isInsertOnly)) {
                         if (!item.hasOwnProperty(key)) {
-                            if (!field.isReadOnly) {
+                            if (!field.isInsertOnly) {
                                 data.$unset = data.$unset || {};
                                 data.$unset[key] = 1;
                             }
@@ -101,7 +101,7 @@ export class ModelActions implements IModelActions {
             for (let [key, field] of this.modelFactory.$fields) {
                 if (item.hasOwnProperty(key) && item[key] !== undefined) {
                     // read only properties MUST NOT be updated, but CAN be inserted at creation
-                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isReadOnly)) {
+                    if (!options.deleteReadOnly || (options.deleteReadOnly && !field.isInsertOnly)) {
                         if (field.isPlural) {
                             data.$addToSet = data.$addToSet || {};
                             data.$addToSet[key] = { $each: (Array.isArray(item[key]) ? item[key] : [item[key]]) };
@@ -156,8 +156,8 @@ export class ModelActions implements IModelActions {
             if (revKey && item.hasOwnProperty(path)) {
                 let revModelFactory: IMongoModelFactory = subProperty ? <IMongoModelFactory>this.modelFactory.getModelFactoryByPath(subProperty) : this.modelFactory;
                 let field = revModelFactory.$fields.get(path);
-                // Do not update read only property
-                if (field.isReadOnly) return;
+                // Do not update insert only property
+                if (field.isInsertOnly) return;
 
                 let refItem = {};
                 refItem[revKey] = field.isPlural ? [_id] : _id;
