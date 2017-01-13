@@ -51,8 +51,8 @@ export class MongodbConnector implements IConnector {
         wait(this.getConnection(ds).dropDatabase());
     }
 
-    createModelFactory(name: string, myClass: any): IModelFactory {
-        return new ModelFactory(name, myClass, this);
+    createModelFactory(name: string, myClass: any, options?: any): IModelFactory {
+        return new ModelFactory(name, myClass, this, options);
     }
 
     registerValidator(validator: IValidator) {

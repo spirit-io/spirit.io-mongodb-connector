@@ -20,8 +20,8 @@ export class ModelFactory extends ModelFactoryBase implements IMongoModelFactory
     public schema: Schema;
     public model: Model<any>;
 
-    constructor(name: string, targetClass: any, connector: IConnector) {
-        super(name, targetClass, connector);
+    constructor(name: string, targetClass: any, connector: IConnector, options?: any) {
+        super(name, targetClass, connector, options);
     }
 
     createSchema(): any {
